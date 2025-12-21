@@ -8,11 +8,12 @@ import {
 } from "react-router-dom";
 import { TodosPage } from "../todos/todos-page.tsx";
 import App from "./App.tsx";
+import {TicTacToe} from '../tic-tac-toe/tic-tac-toe.tsx';
 
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <Navigate to="/todos" replace />,
+    element: <Navigate to="/tick" replace />,
   },
   {
     path: "/todos",
@@ -23,6 +24,10 @@ const router = createBrowserRouter([
         element: <TodosPage />,
       },
     ],
+  },
+    {
+    path: "/tick",
+    element: <TicTacToe />,
   },
 ]);
 
