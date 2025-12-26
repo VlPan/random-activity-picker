@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { useDeepCompareMemo } from 'use-deep-compare';
+import { useMemo, useState } from 'react';
 import { Tabs, Tab, Box, Typography, List, ListItem, ListItemText } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import styles from './Randomizer.module.css';
@@ -18,7 +17,8 @@ const Randomizer = () => {
   const playlistsArray = Array.from(playlists.values());
 
   // Pre-compute activities per playlist once, only recalculate when activities change
-  const activitiesByPlaylistId = useDeepCompareMemo(() => {
+  const activitiesByPlaylistId = useMemo(() => {
+    console.log('activitiesByPlaylistId', activities);
     const map = new Map<string, Activity[]>();
     for (const activity of activities.values()) {
       const existing = map.get(activity.playlistId);
