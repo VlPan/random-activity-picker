@@ -1,4 +1,6 @@
-import { v4 as uuidv4 } from 'uuid';
+// import { v4 as uuidv4 } from 'uuid';
+import type {ActivitiesPlaylist} from '../models/playlist';
+import type {Activity} from '../models/activity';
 
 
 const ACTIVITIES_KEY = 'randomizer_activities';
@@ -60,4 +62,66 @@ export const fetchActivitiesPLaylistsFromStorage = () => {
       resolve(data);
     }, delay);
   });
+};
+
+// CRUD operations for playlists
+export const savePlaylistsToStorage = (playlists: ActivitiesPlaylist[]): void => {
+  localStorage.setItem(ACTIVITIES_PLAYLIST_KEY, JSON.stringify(playlists));
+};
+
+export const addPlaylistToStorage = (playlist: ActivitiesPlaylist): ActivitiesPlaylist[] => {
+  const saved = localStorage.getItem(ACTIVITIES_PLAYLIST_KEY);
+  const playlists = saved ? JSON.parse(saved) : [];
+  const updated = [...playlists, playlist];
+  localStorage.setItem(ACTIVITIES_PLAYLIST_KEY, JSON.stringify(updated));
+  return updated;
+};
+
+export const updatePlaylistInStorage = (playlist: ActivitiesPlaylist): ActivitiesPlaylist[] => {
+  const saved = localStorage.getItem(ACTIVITIES_PLAYLIST_KEY);
+  const playlists = saved ? JSON.parse(saved) : [];
+  const updated = playlists.map((p: ActivitiesPlaylist) => 
+    p.id === playlist.id ? playlist : p
+  );
+  localStorage.setItem(ACTIVITIES_PLAYLIST_KEY, JSON.stringify(updated));
+  return updated;
+};
+
+export const deletePlaylistFromStorage = (playlistId: string): ActivitiesPlaylist[] => {
+  const saved = localStorage.getItem(ACTIVITIES_PLAYLIST_KEY);
+  const playlists = saved ? JSON.parse(saved) : [];
+  const updated = playlists.filter((p: ActivitiesPlaylist) => p.id !== playlistId);
+  localStorage.setItem(ACTIVITIES_PLAYLIST_KEY, JSON.stringify(updated));
+  return updated;
+};
+
+// CRUD operations for activities
+export const saveActivitiesToStorage = (activities: Activity[]): void => {
+  localStorage.setItem(ACTIVITIES_KEY, JSON.stringify(activities));
+};
+
+export const addActivityToStorage = (activity: Activity): Activity[] => {
+  const saved = localStorage.getItem(ACTIVITIES_KEY);
+  const activities = saved ? JSON.parse(saved) : [];
+  const updated = [...activities, activity];
+  localStorage.setItem(ACTIVITIES_KEY, JSON.stringify(updated));
+  return updated;
+};
+
+export const updateActivityInStorage = (activity: Activity): Activity[] => {
+  const saved = localStorage.getItem(ACTIVITIES_KEY);
+  const activities = saved ? JSON.parse(saved) : [];
+  const updated = activities.map((a: Activity) => 
+    a.id === activity.id ? activity : a
+  );
+  localStorage.setItem(ACTIVITIES_KEY, JSON.stringify(updated));
+  return updated;
+};
+
+export const deleteActivityFromStorage = (activityId: string): Activity[] => {
+  const saved = localStorage.getItem(ACTIVITIES_KEY);
+  const activities = saved ? JSON.parse(saved) : [];
+  const updated = activities.filter((a: Activity) => a.id !== activityId);
+  localStorage.setItem(ACTIVITIES_KEY, JSON.stringify(updated));
+  return updated;
 };
