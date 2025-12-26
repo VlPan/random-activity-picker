@@ -7,7 +7,7 @@ import {
   RouterProvider,
 } from "react-router-dom";
 import App from "./App.tsx";
-import Randomizer from '../features/randomizer/Randomizer.tsx';
+import Randomizer from '../pages/randomizer/Randomizer.tsx';
 import { ThemeProvider } from '@mui/material/styles';
 import {theme} from './theme.ts';
 
