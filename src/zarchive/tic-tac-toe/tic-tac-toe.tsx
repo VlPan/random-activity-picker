@@ -1,4 +1,5 @@
 import { useState, type MouseEventHandler } from "react";
+import styles from './Tic-tac-toe.module.css';
 
 export function Square({
   value,
@@ -10,7 +11,7 @@ export function Square({
   onSquareClick: MouseEventHandler<HTMLButtonElement>;
 }) {
   return (
-    <button onClick={onSquareClick} className="square" style={{backgroundColor: isHighlighted ? 'yellow' : ''}}>
+    <button onClick={onSquareClick} className={styles.square} style={{backgroundColor: isHighlighted ? 'yellow' : ''}}>
       {value}
     </button>
   );
@@ -32,7 +33,6 @@ export function Board({ xIsNext, squares, onPlay }: any) {
     },
   ];
 
-  console.log("r", rows);
 
   function handleSquareClick(i: number) {
     console.log("handleSquareClick", i);
@@ -166,3 +166,4 @@ function calculateWinner(squares: number[]) {
   }
   return {winner: null, row: [] as number[]};
 }
+

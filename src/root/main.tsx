@@ -6,33 +6,33 @@ import {
   Navigate,
   RouterProvider,
 } from "react-router-dom";
-import { TodosPage } from "../todos/todos-page.tsx";
 import App from "./App.tsx";
-import {TicTacToe} from '../tic-tac-toe/tic-tac-toe.tsx';
+import Randomizer from '../features/randomizer/Randomizer.tsx';
+import { ThemeProvider } from '@mui/material/styles';
+import {theme} from './theme.ts';
 
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <Navigate to="/tick" replace />,
+    element: <Navigate to="/randomizer" replace />,
   },
   {
-    path: "/todos",
+    path: "/randomizer",
     element: <App />,
     children: [
       {
         index: true,
-        element: <TodosPage />,
+        element: <Randomizer />,
       },
     ],
   },
-    {
-    path: "/tick",
-    element: <TicTacToe />,
-  },
+
 ]);
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <RouterProvider router={router} />
+    <ThemeProvider theme={theme}> 
+      <RouterProvider router={router} />
+    </ThemeProvider>
   </StrictMode>
 );
