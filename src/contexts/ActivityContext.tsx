@@ -15,8 +15,8 @@ import {
 } from '../services/activityService';
 
 interface ActivityContextType {
-  playlists: ActivitiesPlaylist[];
-  activities: Activity[];
+  playlists: Map<string, ActivitiesPlaylist>;
+  activities: Map<string, Activity>;
   loading: boolean;
   error: string | null;
   loadData: () => Promise<void>;
@@ -32,8 +32,8 @@ interface ActivityContextType {
 const ActivityContext = createContext<ActivityContextType | undefined>(undefined);
 
 export const ActivityProvider = ({ children }: { children: ReactNode }) => {
-  const [playlists, setPlaylists] = useState<ActivitiesPlaylist[]>([]);
-  const [activities, setActivities] = useState<Activity[]>([]);
+  const [playlists, setPlaylists] = useState<Map<string, ActivitiesPlaylist>>(new Map());
+  const [activities, setActivities] = useState<Map<string, Activity>>(new Map());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -42,9 +42,9 @@ export const ActivityProvider = ({ children }: { children: ReactNode }) => {
       setLoading(true);
       setError(null);
       const [playlistsData, activitiesData] = await Promise.all([
-        fetchActivitiesPLaylistsFromStorage() as Promise<ActivitiesPlaylist[]>,
-        fetchActivitiesFromStorage() as Promise<Activity[]>,
-      ]);
+        fetchActivitiesPLaylistsFromStorage(),
+        fetchActivitiesFromStorage(),
+      ]) as [Map<string, ActivitiesPlaylist>, Map<string, Activity>];
       setPlaylists(playlistsData);
       setActivities(activitiesData);
     } catch (err) {
@@ -62,7 +62,7 @@ export const ActivityProvider = ({ children }: { children: ReactNode }) => {
 
   const addPlaylist = (playlist: ActivitiesPlaylist) => {
     try {
-      const updated = addPlaylistToStorage(playlist);
+      const updated: Map<string, ActivitiesPlaylist> = addPlaylistToStorage(playlist);
       setPlaylists(updated);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to add playlist';
@@ -73,7 +73,7 @@ export const ActivityProvider = ({ children }: { children: ReactNode }) => {
 
   const updatePlaylist = (playlist: ActivitiesPlaylist) => {
     try {
-      const updated = updatePlaylistInStorage(playlist);
+      const updated: Map<string, ActivitiesPlaylist> = updatePlaylistInStorage(playlist);
       setPlaylists(updated);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to update playlist';
@@ -84,10 +84,15 @@ export const ActivityProvider = ({ children }: { children: ReactNode }) => {
 
   const deletePlaylist = (playlistId: string) => {
     try {
-      const updatedPlaylists = deletePlaylistFromStorage(playlistId);
+      const updatedPlaylists: Map<string, ActivitiesPlaylist> = deletePlaylistFromStorage(playlistId);
       setPlaylists(updatedPlaylists);
       // Also delete all activities associated with this playlist
-      const updatedActivities = activities.filter(a => a.playlistId !== playlistId);
+      const updatedActivities = new Map(activities);
+      for (const [activityId, activity] of activities.entries()) {
+        if (activity.playlistId === playlistId) {
+          updatedActivities.delete(activityId);
+        }
+      }
       saveActivitiesToStorage(updatedActivities);
       setActivities(updatedActivities);
     } catch (err) {
@@ -99,7 +104,7 @@ export const ActivityProvider = ({ children }: { children: ReactNode }) => {
 
   const addActivity = (activity: Activity) => {
     try {
-      const updated = addActivityToStorage(activity);
+      const updated: Map<string, Activity> = addActivityToStorage(activity);
       setActivities(updated);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to add activity';
@@ -110,7 +115,7 @@ export const ActivityProvider = ({ children }: { children: ReactNode }) => {
 
   const updateActivity = (activity: Activity) => {
     try {
-      const updated = updateActivityInStorage(activity);
+      const updated: Map<string, Activity> = updateActivityInStorage(activity);
       setActivities(updated);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to update activity';
@@ -121,7 +126,7 @@ export const ActivityProvider = ({ children }: { children: ReactNode }) => {
 
   const deleteActivity = (activityId: string) => {
     try {
-      const updated = deleteActivityFromStorage(activityId);
+      const updated: Map<string, Activity> = deleteActivityFromStorage(activityId);
       setActivities(updated);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to delete activity';
@@ -131,7 +136,7 @@ export const ActivityProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const getActivitiesForPlaylist = (playlistId: string): Activity[] => {
-    return activities.filter(activity => activity.playlistId === playlistId);
+    return Array.from(activities.values()).filter(activity => activity.playlistId === playlistId);
   };
 
   const value: ActivityContextType = {

@@ -2,7 +2,6 @@
 import type {ActivitiesPlaylist} from '../models/playlist';
 import type {Activity} from '../models/activity';
 
-
 const ACTIVITIES_KEY = 'randomizer_activities';
 const ACTIVITIES_PLAYLIST_KEY = 'randomizer_activities-playlist';
 
@@ -32,9 +31,24 @@ const mockActivities: Activity[] = [
   }
 ];
 
+// Helper functions to convert between arrays and Maps
+const arrayToPlaylistMap = (playlists: ActivitiesPlaylist[]): Map<string, ActivitiesPlaylist> => {
+  return new Map(playlists.map(p => [p.id, p]));
+};
 
+const playlistMapToArray = (map: Map<string, ActivitiesPlaylist>): ActivitiesPlaylist[] => {
+  return Array.from(map.values());
+};
 
-export const fetchActivitiesFromStorage = () => {
+const arrayToActivityMap = (activities: Activity[]): Map<string, Activity> => {
+  return new Map(activities.map(a => [a.id, a]));
+};
+
+const activityMapToArray = (map: Map<string, Activity>): Activity[] => {
+  return Array.from(map.values());
+};
+
+export const fetchActivitiesFromStorage = (): Promise<Map<string, Activity>> => {
   return new Promise((resolve) => {
     const delay = Math.floor(Math.random() * (2000 - 500 + 1)) + 500;
 
@@ -44,12 +58,12 @@ export const fetchActivitiesFromStorage = () => {
       
       if (!saved) localStorage.setItem(ACTIVITIES_KEY, JSON.stringify(data));
       
-      resolve(data);
+      resolve(arrayToActivityMap(data));
     }, delay);
   });
 };
 
-export const fetchActivitiesPLaylistsFromStorage = () => {
+export const fetchActivitiesPLaylistsFromStorage = (): Promise<Map<string, ActivitiesPlaylist>> => {
   return new Promise((resolve) => {
     const delay = Math.floor(Math.random() * (2000 - 500 + 1)) + 500;
 
@@ -59,69 +73,95 @@ export const fetchActivitiesPLaylistsFromStorage = () => {
       
       if (!saved) localStorage.setItem(ACTIVITIES_PLAYLIST_KEY, JSON.stringify(data));
       
-      resolve(data);
+      resolve(arrayToPlaylistMap(data));
     }, delay);
   });
 };
 
 // CRUD operations for playlists
-export const savePlaylistsToStorage = (playlists: ActivitiesPlaylist[]): void => {
+export const savePlaylistsToStorage = (playlistsMap: Map<string, ActivitiesPlaylist>): void => {
+  const playlists = playlistMapToArray(playlistsMap);
   localStorage.setItem(ACTIVITIES_PLAYLIST_KEY, JSON.stringify(playlists));
 };
 
-export const addPlaylistToStorage = (playlist: ActivitiesPlaylist): ActivitiesPlaylist[] => {
+export const addPlaylistToStorage = (playlist: ActivitiesPlaylist): Map<string, ActivitiesPlaylist> => {
   const saved = localStorage.getItem(ACTIVITIES_PLAYLIST_KEY);
-  const playlists = saved ? JSON.parse(saved) : [];
-  const updated = [...playlists, playlist];
+  const playlistsArray = saved ? JSON.parse(saved) : [];
+  const playlistsMap = arrayToPlaylistMap(playlistsArray);
+  
+  playlistsMap.set(playlist.id, playlist);
+  
+  const updated = playlistMapToArray(playlistsMap);
   localStorage.setItem(ACTIVITIES_PLAYLIST_KEY, JSON.stringify(updated));
-  return updated;
+  return playlistsMap;
 };
 
-export const updatePlaylistInStorage = (playlist: ActivitiesPlaylist): ActivitiesPlaylist[] => {
+export const updatePlaylistInStorage = (playlist: ActivitiesPlaylist): Map<string, ActivitiesPlaylist> => {
   const saved = localStorage.getItem(ACTIVITIES_PLAYLIST_KEY);
-  const playlists = saved ? JSON.parse(saved) : [];
-  const updated = playlists.map((p: ActivitiesPlaylist) => 
-    p.id === playlist.id ? playlist : p
-  );
+  const playlistsArray = saved ? JSON.parse(saved) : [];
+  const playlistsMap = arrayToPlaylistMap(playlistsArray);
+  
+  if (playlistsMap.has(playlist.id)) {
+    playlistsMap.set(playlist.id, playlist);
+  }
+  
+  const updated = playlistMapToArray(playlistsMap);
   localStorage.setItem(ACTIVITIES_PLAYLIST_KEY, JSON.stringify(updated));
-  return updated;
+  return playlistsMap;
 };
 
-export const deletePlaylistFromStorage = (playlistId: string): ActivitiesPlaylist[] => {
+export const deletePlaylistFromStorage = (playlistId: string): Map<string, ActivitiesPlaylist> => {
   const saved = localStorage.getItem(ACTIVITIES_PLAYLIST_KEY);
-  const playlists = saved ? JSON.parse(saved) : [];
-  const updated = playlists.filter((p: ActivitiesPlaylist) => p.id !== playlistId);
+  const playlistsArray = saved ? JSON.parse(saved) : [];
+  const playlistsMap = arrayToPlaylistMap(playlistsArray);
+  
+  playlistsMap.delete(playlistId);
+  
+  const updated = playlistMapToArray(playlistsMap);
   localStorage.setItem(ACTIVITIES_PLAYLIST_KEY, JSON.stringify(updated));
-  return updated;
+  return playlistsMap;
 };
 
 // CRUD operations for activities
-export const saveActivitiesToStorage = (activities: Activity[]): void => {
+export const saveActivitiesToStorage = (activitiesMap: Map<string, Activity>): void => {
+  const activities = activityMapToArray(activitiesMap);
   localStorage.setItem(ACTIVITIES_KEY, JSON.stringify(activities));
 };
 
-export const addActivityToStorage = (activity: Activity): Activity[] => {
+export const addActivityToStorage = (activity: Activity): Map<string, Activity> => {
   const saved = localStorage.getItem(ACTIVITIES_KEY);
-  const activities = saved ? JSON.parse(saved) : [];
-  const updated = [...activities, activity];
+  const activitiesArray = saved ? JSON.parse(saved) : [];
+  const activitiesMap = arrayToActivityMap(activitiesArray);
+  
+  activitiesMap.set(activity.id, activity);
+  
+  const updated = activityMapToArray(activitiesMap);
   localStorage.setItem(ACTIVITIES_KEY, JSON.stringify(updated));
-  return updated;
+  return activitiesMap;
 };
 
-export const updateActivityInStorage = (activity: Activity): Activity[] => {
+export const updateActivityInStorage = (activity: Activity): Map<string, Activity> => {
   const saved = localStorage.getItem(ACTIVITIES_KEY);
-  const activities = saved ? JSON.parse(saved) : [];
-  const updated = activities.map((a: Activity) => 
-    a.id === activity.id ? activity : a
-  );
+  const activitiesArray = saved ? JSON.parse(saved) : [];
+  const activitiesMap = arrayToActivityMap(activitiesArray);
+  
+  if (activitiesMap.has(activity.id)) {
+    activitiesMap.set(activity.id, activity);
+  }
+  
+  const updated = activityMapToArray(activitiesMap);
   localStorage.setItem(ACTIVITIES_KEY, JSON.stringify(updated));
-  return updated;
+  return activitiesMap;
 };
 
-export const deleteActivityFromStorage = (activityId: string): Activity[] => {
+export const deleteActivityFromStorage = (activityId: string): Map<string, Activity> => {
   const saved = localStorage.getItem(ACTIVITIES_KEY);
-  const activities = saved ? JSON.parse(saved) : [];
-  const updated = activities.filter((a: Activity) => a.id !== activityId);
+  const activitiesArray = saved ? JSON.parse(saved) : [];
+  const activitiesMap = arrayToActivityMap(activitiesArray);
+  
+  activitiesMap.delete(activityId);
+  
+  const updated = activityMapToArray(activitiesMap);
   localStorage.setItem(ACTIVITIES_KEY, JSON.stringify(updated));
-  return updated;
+  return activitiesMap;
 };

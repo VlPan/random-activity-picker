@@ -13,21 +13,23 @@ const Randomizer = () => {
   const { playlists, loading, getActivitiesForPlaylist } = useActivityContext();
   const [selectedTab, setSelectedTab] = useState<TabSelection>({ type: 'playlist', index: 0 });
 
+  const playlistsArray = Array.from(playlists.values());
+
   const getMuiTabIndex = (selection: TabSelection): number => {
     if (selection.type === 'add-playlist') {
-      return playlists.length;
+      return playlistsArray.length;
     }
     
-    if (playlists.length === 0) {
+    if (playlistsArray.length === 0) {
       return 0;
     }
     
-    const validIndex = Math.min(selection.index, playlists.length - 1);
+    const validIndex = Math.min(selection.index, playlistsArray.length - 1);
     return validIndex;
   };
 
   const getTabSelectionFromMuiIndex = (muiIndex: number): TabSelection => {
-    const isAddPlaylistTab = muiIndex === playlists.length;
+    const isAddPlaylistTab = muiIndex === playlistsArray.length;
     
     if (isAddPlaylistTab) {
       return { type: 'add-playlist' };
@@ -50,7 +52,7 @@ const Randomizer = () => {
   }
 
   const activeMuiTabIndex = getMuiTabIndex(selectedTab);
-  const clampedTabIndex = Math.max(0, Math.min(activeMuiTabIndex, playlists.length));
+  const clampedTabIndex = Math.max(0, Math.min(activeMuiTabIndex, playlistsArray.length));
 
   return (
     <Box className={styles.randomizer} sx={{ width: '100%' }}>
@@ -62,7 +64,7 @@ const Randomizer = () => {
           variant="scrollable"
           scrollButtons="auto"
         >
-          {playlists.map((playlist, index) => (
+          {playlistsArray.map((playlist, index) => (
             <Tab
               key={playlist.id}
               label={playlist.displayName}
@@ -73,13 +75,13 @@ const Randomizer = () => {
           <Tab
             icon={<AddIcon />}
             aria-label="add playlist"
-            id={`playlist-tab-${playlists.length}`}
-            aria-controls={`playlist-tabpanel-${playlists.length}`}
+            id={`playlist-tab-${playlistsArray.length}`}
+            aria-controls={`playlist-tabpanel-${playlistsArray.length}`}
           />
         </Tabs>
       </Box>
 
-      {playlists.map((playlist, index) => {
+      {playlistsArray.map((playlist, index) => {
         const playlistActivities = getActivitiesForPlaylist(playlist.id);
         return (
           <TabPanel key={playlist.id} value={clampedTabIndex} index={index}>
@@ -106,7 +108,7 @@ const Randomizer = () => {
         );
       })}
 
-      <TabPanel value={clampedTabIndex} index={playlists.length}>
+      <TabPanel value={clampedTabIndex} index={playlistsArray.length}>
         <Typography variant="h6" gutterBottom>
           Add New Playlist
         </Typography>
