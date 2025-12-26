@@ -1,19 +1,34 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Tabs, Tab, Box, Typography, List, ListItem, ListItemText } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import styles from './Randomizer.module.css';
 import { useActivityContext } from '../../contexts/ActivityContext';
 import {TabPanel} from '../../components/static/tab-panel';
+import type { Activity } from '../../models/activity';
 
 type TabSelection = 
   | { type: 'playlist'; index: number }
   | { type: 'add-playlist' };
 
 const Randomizer = () => {
-  const { playlists, loading, getActivitiesForPlaylist } = useActivityContext();
+  const { playlists, loading, activities } = useActivityContext();
   const [selectedTab, setSelectedTab] = useState<TabSelection>({ type: 'playlist', index: 0 });
 
   const playlistsArray = Array.from(playlists.values());
+
+  // Pre-compute activities per playlist once, only recalculate when activities change
+  const activitiesByPlaylistId = useMemo(() => {
+    const map = new Map<string, Activity[]>();
+    for (const activity of activities.values()) {
+      const existing = map.get(activity.playlistId);
+      if (existing) {
+        existing.push(activity);
+      } else {
+        map.set(activity.playlistId, [activity]);
+      }
+    }
+    return map;
+  }, [activities]);
 
   const getMuiTabIndex = (selection: TabSelection): number => {
     if (selection.type === 'add-playlist') {
@@ -82,7 +97,7 @@ const Randomizer = () => {
       </Box>
 
       {playlistsArray.map((playlist, index) => {
-        const playlistActivities = getActivitiesForPlaylist(playlist.id);
+        const playlistActivities = activitiesByPlaylistId.get(playlist.id) || [];
         return (
           <TabPanel key={playlist.id} value={clampedTabIndex} index={index}>
             <Typography variant="h6" gutterBottom>
