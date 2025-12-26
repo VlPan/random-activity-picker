@@ -18,7 +18,6 @@ const Randomizer = () => {
 
   // Pre-compute activities per playlist once, only recalculate when activities change
   const activitiesByPlaylistId = useMemo(() => {
-    console.log('activitiesByPlaylistId', activities);
     const map = new Map<string, Activity[]>();
     for (const activity of activities.values()) {
       const existing = map.get(activity.playlistId);
