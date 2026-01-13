@@ -20,12 +20,25 @@ export interface ColumnDef<T> {
 interface DataTableProps<T> {
   data: T[];
   columns: ColumnDef<T>[];
+  minWidth?: number | string;
+  compact?: boolean;
+  elevation?: number;
 }
 
-export const DataTable = <T,>({ data, columns }: DataTableProps<T>) => {
+export const DataTable = <T,>({ 
+  data, 
+  columns, 
+  minWidth = 650, 
+  compact = false,
+  elevation
+}: DataTableProps<T>) => {
   return (
-    <TableContainer component={Paper}>
-      <Table sx={{ minWidth: 650 }} aria-label="data table">
+    <TableContainer component={Paper} elevation={elevation}>
+      <Table 
+        sx={{ minWidth: minWidth }} 
+        aria-label="data table"
+        size={compact ? 'small' : 'medium'}
+      >
         <TableHead>
           <TableRow>
             {columns.map((column) => (
@@ -33,6 +46,7 @@ export const DataTable = <T,>({ data, columns }: DataTableProps<T>) => {
                 key={column.id}
                 align={column.align || 'left'}
                 style={{ minWidth: column.minWidth }}
+                size={compact ? 'small' : 'medium'}
               >
                 {column.label}
               </TableCell>
@@ -50,7 +64,11 @@ export const DataTable = <T,>({ data, columns }: DataTableProps<T>) => {
               {columns.map((column) => {
                 const value = (row as any)[column.id];
                 return (
-                  <TableCell key={column.id} align={column.align || 'left'}>
+                  <TableCell 
+                    key={column.id} 
+                    align={column.align || 'left'}
+                    size={compact ? 'small' : 'medium'}
+                  >
                     {column.render ? column.render(row) : value}
                   </TableCell>
                 );

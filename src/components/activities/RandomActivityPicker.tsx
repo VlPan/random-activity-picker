@@ -1,14 +1,13 @@
-import { useState } from 'react';
-import { Box, Button, Typography, Card, CardContent } from '@mui/material';
+import { Box, Button } from '@mui/material';
 import CasinoIcon from '@mui/icons-material/Casino';
 import type { Activity } from '../../models/activity';
 
 interface RandomActivityPickerProps {
   activities: Activity[];
+  onActivityPicked?: (activity: Activity) => void;
 }
 
-export const RandomActivityPicker = ({ activities }: RandomActivityPickerProps) => {
-  const [pickedActivity, setPickedActivity] = useState<Activity | null>(null);
+export const RandomActivityPicker = ({ activities, onActivityPicked }: RandomActivityPickerProps) => {
 
   const pickRandomActivity = () => {
     if (activities.length === 0) return;
@@ -19,7 +18,7 @@ export const RandomActivityPicker = ({ activities }: RandomActivityPickerProps) 
     for (const activity of activities) {
       randomValue -= activity.priority;
       if (randomValue < 0) {
-        setPickedActivity(activity);
+        onActivityPicked?.(activity);
         return;
       }
     }
@@ -27,7 +26,8 @@ export const RandomActivityPicker = ({ activities }: RandomActivityPickerProps) 
     // Fallback in case of rounding errors, though mathematically unlikely to reach here if logic is correct
     // and totalPriority > 0. If randomValue was exactly totalPriority (exclusive), loop finishes.
     // Math.random() is exclusive of 1, so randomValue < totalPriority.
-    setPickedActivity(activities[activities.length - 1]);
+    const lastActivity = activities[activities.length - 1];
+    onActivityPicked?.(lastActivity);
   };
 
   return (
@@ -41,22 +41,6 @@ export const RandomActivityPicker = ({ activities }: RandomActivityPickerProps) 
       >
         Pick Random Activity
       </Button>
-
-      {pickedActivity && (
-        <Card variant="outlined" sx={{ minWidth: 275, bgcolor: 'background.paper' }}>
-          <CardContent>
-            <Typography sx={{ fontSize: 14 }} color="text.secondary" gutterBottom>
-              Selected Activity
-            </Typography>
-            <Typography variant="h5" component="div">
-              {pickedActivity.displayName}
-            </Typography>
-            <Typography sx={{ mb: 1.5 }} color="text.secondary">
-              Priority: {pickedActivity.priority}
-            </Typography>
-          </CardContent>
-        </Card>
-      )}
     </Box>
   );
 };

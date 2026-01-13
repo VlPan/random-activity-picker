@@ -9,6 +9,9 @@ import { AddActivityDialog } from '../../components/activities/AddActivityDialog
 import { RandomActivityPicker } from '../../components/activities/RandomActivityPicker';
 import { AddPlaylistPanel } from '../../components/playlists/AddPlaylistPanel';
 import { ActivitiesTable } from '../../components/activities/ActivitiesTable';
+import { FloatingPanel } from '../../components/common/FloatingPanel';
+import { TodoList } from '../../components/todo/TodoList';
+import type { TodoItem } from '../../models/todo';
 
 type TabSelection = 
   | { type: 'playlist'; index: number }
@@ -18,6 +21,7 @@ const Randomizer = () => {
   const { playlists, loading, activities } = useActivityContext();
   const [selectedTab, setSelectedTab] = useState<TabSelection>({ type: 'playlist', index: 0 });
   const [isAddActivityOpen, setIsAddActivityOpen] = useState(false);
+  const [todoItems, setTodoItems] = useState<TodoItem[]>([]);
 
   const playlistsArray = Array.from(playlists.values());
 
@@ -67,6 +71,47 @@ const Randomizer = () => {
     // Switch to the new playlist (which will be at the end)
     // The current length is the index of the new item because indices are 0-based
     setSelectedTab({ type: 'playlist', index: playlistsArray.length });
+  };
+
+  const handleActivityPicked = (activity: Activity) => {
+    const newItem: TodoItem = {
+      id: crypto.randomUUID(),
+      activityId: activity.id,
+      displayName: activity.displayName,
+      isCompleted: false,
+    };
+    setTodoItems((prev) => [...prev, newItem]);
+  };
+
+  const handleToggleTodo = (id: string) => {
+    setTodoItems((prev) => {
+      const updated = prev.map((item) => {
+        if (item.id === id) {
+          const isCompleted = !item.isCompleted;
+          return {
+            ...item,
+            isCompleted,
+            completedAt: isCompleted ? new Date() : undefined,
+          };
+        }
+        return item;
+      });
+
+      // Sort: incomplete first, then completed by date (newest first)
+      return updated.sort((a, b) => {
+        if (a.isCompleted === b.isCompleted) {
+          if (a.isCompleted && a.completedAt && b.completedAt) {
+            return b.completedAt.getTime() - a.completedAt.getTime();
+          }
+          return 0;
+        }
+        return a.isCompleted ? 1 : -1;
+      });
+    });
+  };
+
+  const handleDeleteTodo = (id: string) => {
+    setTodoItems((prev) => prev.filter((item) => item.id !== id));
   };
 
   if (loading) {
@@ -119,7 +164,10 @@ const Randomizer = () => {
             <Typography variant="h6" gutterBottom>
               {playlist.displayName}
             </Typography>
-            <RandomActivityPicker activities={playlistActivities} />
+            <RandomActivityPicker 
+              activities={playlistActivities} 
+              onActivityPicked={handleActivityPicked}
+            />
             {playlistActivities.length > 0 ? (
               <ActivitiesTable activities={playlistActivities} />
             ) : (
@@ -155,6 +203,16 @@ const Randomizer = () => {
         onClose={() => setIsAddActivityOpen(false)}
         defaultPlaylistId={currentPlaylistId}
       />
+
+      {todoItems.length > 0 && (
+        <FloatingPanel title="Session Todos">
+          <TodoList
+            items={todoItems}
+            onToggleComplete={handleToggleTodo}
+            onDelete={handleDeleteTodo}
+          />
+        </FloatingPanel>
+      )}
     </Box>
   );
 };
