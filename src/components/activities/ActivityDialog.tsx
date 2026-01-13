@@ -11,6 +11,8 @@ import {
   FormControl,
   InputLabel,
   Box,
+  Slider,
+  Typography,
 } from '@mui/material';
 import type { SelectChangeEvent } from '@mui/material';
 import { v4 as uuidv4 } from 'uuid';
@@ -54,9 +56,8 @@ export const ActivityDialog = ({ open, onClose, defaultPlaylistId, activityToEdi
     }
   };
 
-  const handlePriorityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = parseInt(e.target.value, 10);
-    setPriority(isNaN(val) ? 0 : val);
+  const handlePriorityChange = (_event: Event, newValue: number | number[]) => {
+    setPriority(newValue as number);
   };
 
   const handlePlaylistChange = (e: SelectChangeEvent) => {
@@ -125,17 +126,21 @@ export const ActivityDialog = ({ open, onClose, defaultPlaylistId, activityToEdi
               slotProps={{ htmlInput: { maxLength: 254 } }}
             />
             
-            <TextField
-              label="Priority"
-              type="number"
-              value={priority}
-              onChange={handlePriorityChange}
-              fullWidth
-              required
-              slotProps={{ htmlInput: { min: 1 } }}
-              error={priority < 1}
-              helperText={priority < 1 ? "Priority must be at least 1" : undefined}
-            />
+            <Box sx={{ width: '90%', mx: 'auto' }}>
+              <Typography id="priority-slider" gutterBottom>
+                Priority: {priority}
+              </Typography>
+              <Slider
+                aria-labelledby="priority-slider"
+                value={priority}
+                onChange={handlePriorityChange}
+                valueLabelDisplay="auto"
+                step={1}
+                marks
+                min={1}
+                max={10}
+              />
+            </Box>
 
             <FormControl fullWidth required>
               <InputLabel id="playlist-select-label">Playlist</InputLabel>
