@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Tabs, Tab, Box, Typography, List, ListItem, ListItemText, Fab } from '@mui/material';
+import { Tabs, Tab, Box, Typography, Fab } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import styles from './Randomizer.module.css';
 import { useActivityContext } from '../../contexts/ActivityContext';
@@ -7,6 +7,7 @@ import { TabPanel } from '../../components/static/tab-panel';
 import type { Activity } from '../../models/activity';
 import { AddActivityDialog } from '../../components/activities/AddActivityDialog';
 import { AddPlaylistPanel } from '../../components/playlists/AddPlaylistPanel';
+import { ActivitiesTable } from '../../components/activities/ActivitiesTable';
 
 type TabSelection = 
   | { type: 'playlist'; index: number }
@@ -118,16 +119,7 @@ const Randomizer = () => {
               {playlist.displayName}
             </Typography>
             {playlistActivities.length > 0 ? (
-              <List>
-                {playlistActivities.map((activity) => (
-                  <ListItem key={activity.id}>
-                    <ListItemText
-                      primary={activity.displayName}
-                      secondary={`Priority: ${activity.priority}`}
-                    />
-                  </ListItem>
-                ))}
-              </List>
+              <ActivitiesTable activities={playlistActivities} />
             ) : (
               <Typography variant="body2" color="text.secondary">
                 No activities in this playlist yet.
