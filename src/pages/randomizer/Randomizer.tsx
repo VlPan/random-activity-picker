@@ -6,6 +6,7 @@ import { useActivityContext } from '../../contexts/ActivityContext';
 import { TabPanel } from '../../components/static/tab-panel';
 import type { Activity } from '../../models/activity';
 import { AddActivityDialog } from '../../components/activities/AddActivityDialog';
+import { RandomActivityPicker } from '../../components/activities/RandomActivityPicker';
 import { AddPlaylistPanel } from '../../components/playlists/AddPlaylistPanel';
 import { ActivitiesTable } from '../../components/activities/ActivitiesTable';
 
@@ -118,6 +119,7 @@ const Randomizer = () => {
             <Typography variant="h6" gutterBottom>
               {playlist.displayName}
             </Typography>
+            <RandomActivityPicker activities={playlistActivities} />
             {playlistActivities.length > 0 ? (
               <ActivitiesTable activities={playlistActivities} />
             ) : (
