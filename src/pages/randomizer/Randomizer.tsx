@@ -6,6 +6,7 @@ import { useActivityContext } from '../../contexts/ActivityContext';
 import { TabPanel } from '../../components/static/tab-panel';
 import type { Activity } from '../../models/activity';
 import { AddActivityDialog } from '../../components/activities/AddActivityDialog';
+import { AddPlaylistPanel } from '../../components/playlists/AddPlaylistPanel';
 
 type TabSelection = 
   | { type: 'playlist'; index: number }
@@ -58,6 +59,12 @@ const Randomizer = () => {
   const handleTabChange = (_event: React.SyntheticEvent, muiTabIndex: number) => {
     const newSelection = getTabSelectionFromMuiIndex(muiTabIndex);
     setSelectedTab(newSelection);
+  };
+
+  const handlePlaylistAdded = () => {
+    // Switch to the new playlist (which will be at the end)
+    // The current length is the index of the new item because indices are 0-based
+    setSelectedTab({ type: 'playlist', index: playlistsArray.length });
   };
 
   if (loading) {
@@ -131,12 +138,7 @@ const Randomizer = () => {
       })}
 
       <TabPanel value={clampedTabIndex} index={playlistsArray.length}>
-        <Typography variant="h6" gutterBottom>
-          Add New Playlist
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          Modal to add a new playlist will be implemented here.
-        </Typography>
+        <AddPlaylistPanel onPlaylistAdded={handlePlaylistAdded} />
       </TabPanel>
 
       {selectedTab.type === 'playlist' && playlistsArray.length > 0 && (
