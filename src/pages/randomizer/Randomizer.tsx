@@ -20,6 +20,7 @@ import type { TodoItem } from '../../models/todo';
 
 type TabSelection = 
   | { type: 'playlist'; index: number }
+  | { type: 'all-activities' }
   | { type: 'add-playlist' };
 
 const Randomizer = () => {
@@ -57,10 +58,16 @@ const Randomizer = () => {
 
   const getMuiTabIndex = (selection: TabSelection): number => {
     if (selection.type === 'add-playlist') {
+      return playlistsArray.length + 1;
+    }
+    
+    if (selection.type === 'all-activities') {
       return playlistsArray.length;
     }
     
     if (playlistsArray.length === 0) {
+      // If no playlists exist, we show All Activities at index 0
+      // So if we are trying to select a playlist that doesn't exist, fallback to All Activities
       return 0;
     }
     
@@ -69,10 +76,15 @@ const Randomizer = () => {
   };
 
   const getTabSelectionFromMuiIndex = (muiIndex: number): TabSelection => {
-    const isAddPlaylistTab = muiIndex === playlistsArray.length;
+    const isAddPlaylistTab = muiIndex === playlistsArray.length + 1;
+    const isAllActivitiesTab = muiIndex === playlistsArray.length;
     
     if (isAddPlaylistTab) {
       return { type: 'add-playlist' };
+    }
+
+    if (isAllActivitiesTab) {
+      return { type: 'all-activities' };
     }
     
     return { type: 'playlist', index: muiIndex };
@@ -190,7 +202,7 @@ const Randomizer = () => {
   }
 
   const activeMuiTabIndex = getMuiTabIndex(selectedTab);
-  const clampedTabIndex = Math.max(0, Math.min(activeMuiTabIndex, playlistsArray.length));
+  const clampedTabIndex = Math.max(0, Math.min(activeMuiTabIndex, playlistsArray.length + 1));
   
   // Calculate current playlist ID for the dialog default
   const currentPlaylistId = selectedTab.type === 'playlist' && playlistsArray.length > 0
@@ -217,10 +229,15 @@ const Randomizer = () => {
             />
           ))}
           <Tab
-            icon={<AddIcon />}
-            aria-label="add playlist"
+            label="All Activities"
             id={`playlist-tab-${playlistsArray.length}`}
             aria-controls={`playlist-tabpanel-${playlistsArray.length}`}
+          />
+          <Tab
+            icon={<AddIcon />}
+            aria-label="add playlist"
+            id={`playlist-tab-${playlistsArray.length + 1}`}
+            aria-controls={`playlist-tabpanel-${playlistsArray.length + 1}`}
           />
         </Tabs>
       </Box>
@@ -248,6 +265,26 @@ const Randomizer = () => {
       })}
 
       <TabPanel value={clampedTabIndex} index={playlistsArray.length}>
+        <Typography variant="h6" gutterBottom>
+          All Activities
+        </Typography>
+        <RandomActivityPicker 
+          activities={Array.from(activities.values())} 
+          onActivityPicked={handleActivityPicked}
+        />
+        {activities.size > 0 ? (
+          <ActivitiesTable 
+            activities={Array.from(activities.values())} 
+            showPlaylistColumn={true} 
+          />
+        ) : (
+          <Typography variant="body2" color="text.secondary">
+            No activities created yet.
+          </Typography>
+        )}
+      </TabPanel>
+
+      <TabPanel value={clampedTabIndex} index={playlistsArray.length + 1}>
         <AddPlaylistPanel onPlaylistAdded={handlePlaylistAdded} />
       </TabPanel>
 

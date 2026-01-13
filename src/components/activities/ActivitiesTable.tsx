@@ -12,10 +12,11 @@ import type { ColumnDef } from '../common/DataTable';
 
 interface ActivitiesTableProps {
   activities: Activity[];
+  showPlaylistColumn?: boolean;
 }
 
-export const ActivitiesTable = ({ activities }: ActivitiesTableProps) => {
-  const { deleteActivity } = useActivityContext();
+export const ActivitiesTable = ({ activities, showPlaylistColumn = false }: ActivitiesTableProps) => {
+  const { deleteActivity, playlists } = useActivityContext();
   
   // State for the menu
   const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
@@ -72,6 +73,12 @@ export const ActivitiesTable = ({ activities }: ActivitiesTableProps) => {
       label: 'Name',
       align: 'left',
     },
+    ...(showPlaylistColumn ? [{
+      id: 'playlist',
+      label: 'Playlist',
+      align: 'left' as const,
+      render: (activity: Activity) => playlists.get(activity.playlistId)?.displayName || 'Unknown',
+    }] : []),
     {
       id: 'priority',
       label: 'Priority',
