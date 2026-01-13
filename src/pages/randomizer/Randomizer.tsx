@@ -12,7 +12,7 @@ import { useActivityContext } from '../../contexts/ActivityContext';
 import { TabPanel } from '../../components/static/tab-panel';
 import type { Activity } from '../../models/activity';
 import type { ActivitiesPlaylist } from '../../models/playlist';
-import { AddActivityDialog } from '../../components/activities/AddActivityDialog';
+import { ActivityDialog } from '../../components/activities/ActivityDialog';
 import { RandomActivityPicker } from '../../components/activities/RandomActivityPicker';
 import { AddPlaylistPanel } from '../../components/playlists/AddPlaylistPanel';
 import { RenamePlaylistDialog } from '../../components/playlists/RenamePlaylistDialog';
@@ -62,6 +62,7 @@ const Randomizer = () => {
   const { playlists, loading, activities, updatePlaylist, deletePlaylist, reorderPlaylists } = useActivityContext();
   const [selectedTab, setSelectedTab] = useState<TabSelection>({ type: 'playlist', index: 0 });
   const [isAddActivityOpen, setIsAddActivityOpen] = useState(false);
+  const [editingActivity, setEditingActivity] = useState<Activity | undefined>(undefined);
   const [todoItems, setTodoItems] = useState<TodoItem[]>([]);
 
   // Context Menu State
@@ -142,6 +143,11 @@ const Randomizer = () => {
     // Switch to the new playlist (which will be at the end)
     // The current length is the index of the new item because indices are 0-based
     setSelectedTab({ type: 'playlist', index: playlistsArray.length });
+  };
+
+  const handleEditActivity = (activity: Activity) => {
+    setEditingActivity(activity);
+    setIsAddActivityOpen(true);
   };
 
   const handleActivityPicked = (activity: Activity) => {
@@ -343,7 +349,10 @@ const Randomizer = () => {
               onActivityPicked={handleActivityPicked}
             />
             {playlistActivities.length > 0 ? (
-              <ActivitiesTable activities={playlistActivities} />
+              <ActivitiesTable 
+                activities={playlistActivities} 
+                onEdit={handleEditActivity}
+              />
             ) : (
               <Typography variant="body2" color="text.secondary">
                 No activities in this playlist yet.
@@ -365,6 +374,7 @@ const Randomizer = () => {
           <ActivitiesTable 
             activities={Array.from(activities.values())} 
             showPlaylistColumn={true} 
+            onEdit={handleEditActivity}
           />
         ) : (
           <Typography variant="body2" color="text.secondary">
@@ -386,16 +396,23 @@ const Randomizer = () => {
             bottom: 32,
             right: 32,
           }}
-          onClick={() => setIsAddActivityOpen(true)}
+          onClick={() => {
+            setEditingActivity(undefined);
+            setIsAddActivityOpen(true);
+          }}
         >
           <AddIcon />
         </Fab>
       )}
 
-      <AddActivityDialog
+      <ActivityDialog
         open={isAddActivityOpen}
-        onClose={() => setIsAddActivityOpen(false)}
+        onClose={() => {
+          setIsAddActivityOpen(false);
+          setEditingActivity(undefined);
+        }}
         defaultPlaylistId={currentPlaylistId}
+        activityToEdit={editingActivity}
       />
 
       {todoItems.length > 0 && (

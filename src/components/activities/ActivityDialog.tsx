@@ -17,28 +17,35 @@ import { v4 as uuidv4 } from 'uuid';
 import { useActivityContext } from '../../contexts/ActivityContext';
 import type { Activity } from '../../models/activity';
 
-interface AddActivityDialogProps {
+interface ActivityDialogProps {
   open: boolean;
   onClose: () => void;
   defaultPlaylistId?: string;
+  activityToEdit?: Activity;
 }
 
-export const AddActivityDialog = ({ open, onClose, defaultPlaylistId }: AddActivityDialogProps) => {
-  const { playlists, addActivity } = useActivityContext();
+export const ActivityDialog = ({ open, onClose, defaultPlaylistId, activityToEdit }: ActivityDialogProps) => {
+  const { playlists, addActivity, updateActivity } = useActivityContext();
   const [name, setName] = useState('');
   const [priority, setPriority] = useState<number>(1);
   const [playlistId, setPlaylistId] = useState<string>('');
   const [errors, setErrors] = useState<{ name?: string }>({});
 
-  // Reset form when dialog opens
+  // Reset or prefill form when dialog opens
   useEffect(() => {
     if (open) {
-      setName('');
-      setPriority(1);
-      setPlaylistId(defaultPlaylistId || '');
+      if (activityToEdit) {
+        setName(activityToEdit.displayName);
+        setPriority(activityToEdit.priority);
+        setPlaylistId(activityToEdit.playlistId);
+      } else {
+        setName('');
+        setPriority(1);
+        setPlaylistId(defaultPlaylistId || '');
+      }
       setErrors({});
     }
-  }, [open, defaultPlaylistId]);
+  }, [open, defaultPlaylistId, activityToEdit]);
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setName(e.target.value);
@@ -76,14 +83,24 @@ export const AddActivityDialog = ({ open, onClose, defaultPlaylistId }: AddActiv
       return; 
     }
 
-    const newActivity: Activity = {
-      id: uuidv4(),
-      displayName: name.trim(),
-      priority: priority,
-      playlistId: playlistId
-    };
+    if (activityToEdit) {
+      const updatedActivity: Activity = {
+        ...activityToEdit,
+        displayName: name.trim(),
+        priority: priority,
+        playlistId: playlistId
+      };
+      updateActivity(updatedActivity);
+    } else {
+      const newActivity: Activity = {
+        id: uuidv4(),
+        displayName: name.trim(),
+        priority: priority,
+        playlistId: playlistId
+      };
+      addActivity(newActivity);
+    }
 
-    addActivity(newActivity);
     onClose();
   };
 
@@ -93,7 +110,7 @@ export const AddActivityDialog = ({ open, onClose, defaultPlaylistId }: AddActiv
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       <form onSubmit={handleSubmit}>
-        <DialogTitle>Add New Activity</DialogTitle>
+        <DialogTitle>{activityToEdit ? 'Edit Activity' : 'Add New Activity'}</DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
             <TextField
@@ -140,7 +157,7 @@ export const AddActivityDialog = ({ open, onClose, defaultPlaylistId }: AddActiv
         <DialogActions>
           <Button onClick={onClose}>Cancel</Button>
           <Button type="submit" variant="contained" disabled={!isValid}>
-            Add
+            {activityToEdit ? 'Save' : 'Add'}
           </Button>
         </DialogActions>
       </form>

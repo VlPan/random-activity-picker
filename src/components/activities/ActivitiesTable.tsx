@@ -13,9 +13,10 @@ import type { ColumnDef } from '../common/DataTable';
 interface ActivitiesTableProps {
   activities: Activity[];
   showPlaylistColumn?: boolean;
+  onEdit?: (activity: Activity) => void;
 }
 
-export const ActivitiesTable = ({ activities, showPlaylistColumn = false }: ActivitiesTableProps) => {
+export const ActivitiesTable = ({ activities, showPlaylistColumn = false, onEdit }: ActivitiesTableProps) => {
   const { deleteActivity, playlists } = useActivityContext();
   
   // State for the menu
@@ -36,8 +37,9 @@ export const ActivitiesTable = ({ activities, showPlaylistColumn = false }: Acti
   };
 
   const handleEdit = () => {
-    // Placeholder for edit
-    console.log('Edit activity:', selectedActivity);
+    if (onEdit && selectedActivity) {
+      onEdit(selectedActivity);
+    }
     handleMenuClose();
   };
 
