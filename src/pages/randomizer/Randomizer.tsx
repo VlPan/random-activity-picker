@@ -1,5 +1,9 @@
 import { useMemo, useState } from 'react';
 import { Tabs, Tab, Box, Typography, Fab, Menu, MenuItem, ListItemIcon, ListItemText } from '@mui/material';
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import type { DragEndEvent } from '@dnd-kit/core';
+import { SortableContext, horizontalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -23,8 +27,39 @@ type TabSelection =
   | { type: 'all-activities' }
   | { type: 'add-playlist' };
 
+// Sortable Tab Component
+const SortableTab = (props: any) => {
+  const { sortableId, ...other } = props;
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: sortableId });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    cursor: isDragging ? 'grabbing' : 'pointer',
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 1 : 'auto',
+  };
+
+  return (
+    <Tab
+      ref={setNodeRef}
+      {...other}
+      {...attributes}
+      {...listeners}
+      style={{ ...other.style, ...style }}
+    />
+  );
+};
+
 const Randomizer = () => {
-  const { playlists, loading, activities, updatePlaylist, deletePlaylist } = useActivityContext();
+  const { playlists, loading, activities, updatePlaylist, deletePlaylist, reorderPlaylists } = useActivityContext();
   const [selectedTab, setSelectedTab] = useState<TabSelection>({ type: 'playlist', index: 0 });
   const [isAddActivityOpen, setIsAddActivityOpen] = useState(false);
   const [todoItems, setTodoItems] = useState<TodoItem[]>([]);
@@ -39,6 +74,14 @@ const Randomizer = () => {
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [playlistToAction, setPlaylistToAction] = useState<ActivitiesPlaylist | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // Require 8px movement before drag starts to prevent accidental drags on click
+      },
+    })
+  );
 
   const playlistsArray = Array.from(playlists.values());
 
@@ -193,6 +236,40 @@ const Randomizer = () => {
     }
   };
 
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (active.id !== over?.id) {
+      const oldIndex = playlistsArray.findIndex((p) => p.id === active.id);
+      const newIndex = playlistsArray.findIndex((p) => p.id === over?.id);
+
+      if (oldIndex !== -1 && newIndex !== -1) {
+        // Calculate new order
+        const newPlaylistsArray = arrayMove(playlistsArray, oldIndex, newIndex);
+        const newOrder = newPlaylistsArray.map((p) => p.id);
+        
+        // If we are currently on a playlist tab, we need to track where it went
+        if (selectedTab.type === 'playlist') {
+          const currentPlaylistId = playlistsArray[selectedTab.index]?.id;
+          
+          // Reorder the playlists in context
+          reorderPlaylists(newOrder);
+          
+          // Find new index of the previously selected playlist
+          const newSelectedIndex = newPlaylistsArray.findIndex(p => p.id === currentPlaylistId);
+          if (newSelectedIndex !== -1) {
+            setSelectedTab({ type: 'playlist', index: newSelectedIndex });
+          }
+        } else {
+          // If we are on 'all-activities' or 'add-playlist', their logical index shifts 
+          // but the type doesn't change, so we don't strictly need to update selectedTab 
+          // unless we want to keep index valid, but getMuiTabIndex handles the mapping.
+          reorderPlaylists(newOrder);
+        }
+      }
+    }
+  };
+
   if (loading) {
     return (
       <Box sx={{ p: 3 }}>
@@ -211,36 +288,48 @@ const Randomizer = () => {
 
   return (
     <Box className={styles.randomizer} sx={{ width: '100%', position: 'relative', minHeight: '100vh' }}>
-      <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-        <Tabs
-          value={clampedTabIndex}
-          onChange={handleTabChange}
-          aria-label="playlist tabs"
-          variant="scrollable"
-          scrollButtons="auto"
-        >
-          {playlistsArray.map((playlist, index) => (
-            <Tab
-              key={playlist.id}
-              label={playlist.displayName}
-              id={`playlist-tab-${index}`}
-              aria-controls={`playlist-tabpanel-${index}`}
-              onContextMenu={(e) => handleContextMenu(e, playlist)}
-            />
-          ))}
-          <Tab
-            label="All Activities"
-            id={`playlist-tab-${playlistsArray.length}`}
-            aria-controls={`playlist-tabpanel-${playlistsArray.length}`}
-          />
-          <Tab
-            icon={<AddIcon />}
-            aria-label="add playlist"
-            id={`playlist-tab-${playlistsArray.length + 1}`}
-            aria-controls={`playlist-tabpanel-${playlistsArray.length + 1}`}
-          />
-        </Tabs>
-      </Box>
+      <DndContext 
+        sensors={sensors} 
+        collisionDetection={closestCenter} 
+        onDragEnd={handleDragEnd}
+      >
+        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+          <SortableContext 
+            items={playlistsArray.map(p => p.id)} 
+            strategy={horizontalListSortingStrategy}
+          >
+            <Tabs
+              value={clampedTabIndex}
+              onChange={handleTabChange}
+              aria-label="playlist tabs"
+              variant="scrollable"
+              scrollButtons="auto"
+            >
+              {playlistsArray.map((playlist, index) => (
+                <SortableTab
+                  key={playlist.id}
+                  sortableId={playlist.id}
+                  label={playlist.displayName}
+                  id={`playlist-tab-${index}`}
+                  aria-controls={`playlist-tabpanel-${index}`}
+                  onContextMenu={(e: React.MouseEvent) => handleContextMenu(e, playlist)}
+                />
+              ))}
+              <Tab
+                label="All Activities"
+                id={`playlist-tab-${playlistsArray.length}`}
+                aria-controls={`playlist-tabpanel-${playlistsArray.length}`}
+              />
+              <Tab
+                icon={<AddIcon />}
+                aria-label="add playlist"
+                id={`playlist-tab-${playlistsArray.length + 1}`}
+                aria-controls={`playlist-tabpanel-${playlistsArray.length + 1}`}
+              />
+            </Tabs>
+          </SortableContext>
+        </Box>
+      </DndContext>
 
       {playlistsArray.map((playlist, index) => {
         const playlistActivities = activitiesByPlaylistId.get(playlist.id) || [];

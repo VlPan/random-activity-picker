@@ -6,6 +6,7 @@ import {
   fetchActivitiesPLaylistsFromStorage,
   fetchActivitiesFromStorage,
   saveActivitiesToStorage,
+  savePlaylistsToStorage,
   addPlaylistToStorage,
   updatePlaylistInStorage,
   deletePlaylistFromStorage,
@@ -27,6 +28,7 @@ interface ActivityContextType {
   updateActivity: (activity: Activity) => void;
   deleteActivity: (activityId: string) => void;
   getActivitiesForPlaylist: (playlistId: string) => Activity[];
+  reorderPlaylists: (newOrder: string[]) => void;
 }
 
 const ActivityContext = createContext<ActivityContextType | undefined>(undefined);
@@ -139,6 +141,34 @@ export const ActivityProvider = ({ children }: { children: ReactNode }) => {
     return Array.from(activities.values()).filter(activity => activity.playlistId === playlistId);
   };
 
+  const reorderPlaylists = (newOrder: string[]) => {
+    try {
+      const newPlaylistsMap = new Map<string, ActivitiesPlaylist>();
+      
+      // Reconstruct map in the new order
+      newOrder.forEach(id => {
+        const playlist = playlists.get(id);
+        if (playlist) {
+          newPlaylistsMap.set(id, playlist);
+        }
+      });
+      
+      // Add any missing playlists (just in case)
+      playlists.forEach((playlist, id) => {
+        if (!newPlaylistsMap.has(id)) {
+          newPlaylistsMap.set(id, playlist);
+        }
+      });
+      
+      setPlaylists(newPlaylistsMap);
+      savePlaylistsToStorage(newPlaylistsMap);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to reorder playlists';
+      setError(errorMessage);
+      console.error('Error reordering playlists:', err);
+    }
+  };
+
   const value: ActivityContextType = {
     playlists,
     activities,
@@ -152,6 +182,7 @@ export const ActivityProvider = ({ children }: { children: ReactNode }) => {
     updateActivity,
     deleteActivity,
     getActivitiesForPlaylist,
+    reorderPlaylists,
   };
 
   return (
