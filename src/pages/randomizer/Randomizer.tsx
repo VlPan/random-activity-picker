@@ -1,15 +1,20 @@
 import { useMemo, useState } from 'react';
-import { Tabs, Tab, Box, Typography, Fab } from '@mui/material';
+import { Tabs, Tab, Box, Typography, Fab, Menu, MenuItem, ListItemIcon, ListItemText } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
 import styles from './Randomizer.module.css';
 import { useActivityContext } from '../../contexts/ActivityContext';
 import { TabPanel } from '../../components/static/tab-panel';
 import type { Activity } from '../../models/activity';
+import type { ActivitiesPlaylist } from '../../models/playlist';
 import { AddActivityDialog } from '../../components/activities/AddActivityDialog';
 import { RandomActivityPicker } from '../../components/activities/RandomActivityPicker';
 import { AddPlaylistPanel } from '../../components/playlists/AddPlaylistPanel';
+import { RenamePlaylistDialog } from '../../components/playlists/RenamePlaylistDialog';
 import { ActivitiesTable } from '../../components/activities/ActivitiesTable';
 import { FloatingPanel } from '../../components/common/FloatingPanel';
+import { ConfirmationDialog } from '../../components/common/ConfirmationDialog';
 import { TodoList } from '../../components/todo/TodoList';
 import type { TodoItem } from '../../models/todo';
 
@@ -18,10 +23,21 @@ type TabSelection =
   | { type: 'add-playlist' };
 
 const Randomizer = () => {
-  const { playlists, loading, activities } = useActivityContext();
+  const { playlists, loading, activities, updatePlaylist, deletePlaylist } = useActivityContext();
   const [selectedTab, setSelectedTab] = useState<TabSelection>({ type: 'playlist', index: 0 });
   const [isAddActivityOpen, setIsAddActivityOpen] = useState(false);
   const [todoItems, setTodoItems] = useState<TodoItem[]>([]);
+
+  // Context Menu State
+  const [contextMenu, setContextMenu] = useState<{
+    mouseX: number;
+    mouseY: number;
+    playlist: ActivitiesPlaylist;
+  } | null>(null);
+
+  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [playlistToAction, setPlaylistToAction] = useState<ActivitiesPlaylist | null>(null);
 
   const playlistsArray = Array.from(playlists.values());
 
@@ -114,6 +130,57 @@ const Randomizer = () => {
     setTodoItems((prev) => prev.filter((item) => item.id !== id));
   };
 
+  const handleContextMenu = (event: React.MouseEvent, playlist: ActivitiesPlaylist) => {
+    event.preventDefault();
+    setContextMenu(
+      contextMenu === null
+        ? {
+            mouseX: event.clientX + 2,
+            mouseY: event.clientY - 6,
+            playlist,
+          }
+        : null,
+    );
+  };
+
+  const handleCloseContextMenu = () => {
+    setContextMenu(null);
+  };
+
+  const handleRenameClick = () => {
+    if (contextMenu) {
+      setPlaylistToAction(contextMenu.playlist);
+      setRenameDialogOpen(true);
+      handleCloseContextMenu();
+    }
+  };
+
+  const handleDeleteClick = () => {
+    if (contextMenu) {
+      setPlaylistToAction(contextMenu.playlist);
+      setDeleteDialogOpen(true);
+      handleCloseContextMenu();
+    }
+  };
+
+  const handleConfirmRename = (newName: string) => {
+    if (playlistToAction) {
+      updatePlaylist({
+        ...playlistToAction,
+        displayName: newName
+      });
+      setPlaylistToAction(null);
+    }
+  };
+
+  const handleConfirmDelete = () => {
+    if (playlistToAction) {
+      deletePlaylist(playlistToAction.id);
+      setDeleteDialogOpen(false);
+      setPlaylistToAction(null);
+    }
+  };
+
   if (loading) {
     return (
       <Box sx={{ p: 3 }}>
@@ -146,6 +213,7 @@ const Randomizer = () => {
               label={playlist.displayName}
               id={`playlist-tab-${index}`}
               aria-controls={`playlist-tabpanel-${index}`}
+              onContextMenu={(e) => handleContextMenu(e, playlist)}
             />
           ))}
           <Tab
@@ -213,6 +281,47 @@ const Randomizer = () => {
           />
         </FloatingPanel>
       )}
+
+      <Menu
+        open={contextMenu !== null}
+        onClose={handleCloseContextMenu}
+        anchorReference="anchorPosition"
+        anchorPosition={
+          contextMenu !== null
+            ? { top: contextMenu.mouseY, left: contextMenu.mouseX }
+            : undefined
+        }
+      >
+        <MenuItem onClick={handleRenameClick}>
+          <ListItemIcon>
+            <EditIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Rename</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={handleDeleteClick}>
+          <ListItemIcon>
+            <DeleteIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Delete</ListItemText>
+        </MenuItem>
+      </Menu>
+
+      <RenamePlaylistDialog
+        open={renameDialogOpen}
+        onClose={() => setRenameDialogOpen(false)}
+        onConfirm={handleConfirmRename}
+        currentName={playlistToAction?.displayName || ''}
+      />
+
+      <ConfirmationDialog
+        open={deleteDialogOpen}
+        title="Delete Playlist"
+        content="Are you sure you want to delete this playlist? All activities in this playlist will also be deleted. This action cannot be undone."
+        onClose={() => setDeleteDialogOpen(false)}
+        onConfirm={handleConfirmDelete}
+        confirmLabel="Delete"
+        confirmColor="error"
+      />
     </Box>
   );
 };
