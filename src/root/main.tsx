@@ -11,6 +11,8 @@ import Randomizer from '../pages/randomizer/Randomizer.tsx';
 import { ThemeProvider } from '@mui/material/styles';
 import {theme} from './theme.ts';
 
+// ... imports
+
 const router = createBrowserRouter([
   {
     path: "/",
@@ -26,8 +28,11 @@ const router = createBrowserRouter([
       },
     ],
   },
+], {
+  basename: import.meta.env.BASE_URL
+});
 
-]);
+// ... render
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

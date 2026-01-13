@@ -6,8 +6,9 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { useActivityContext } from '../../contexts/ActivityContext';
 import type { Activity } from '../../models/activity';
-import { DataTable, ColumnDef } from '../common/DataTable';
+import { DataTable } from '../common/DataTable';
 import { ConfirmationDialog } from '../common/ConfirmationDialog';
+import type { ColumnDef } from '../common/DataTable';
 
 interface ActivitiesTableProps {
   activities: Activity[];
