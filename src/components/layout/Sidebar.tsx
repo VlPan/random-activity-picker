@@ -18,6 +18,8 @@ import {
   ChevronLeft as ChevronLeftIcon,
 } from '@mui/icons-material';
 import { useLayoutContext } from '../../contexts/LayoutContext';
+import { useUserContext } from '../../contexts/UserContext';
+import { Box, Typography, Tooltip } from '@mui/material';
 
 const drawerWidth = 240;
 
@@ -59,17 +61,26 @@ const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' 
     boxSizing: 'border-box',
     ...(open && {
       ...openedMixin(theme),
-      '& .MuiDrawer-paper': openedMixin(theme),
+      '& .MuiDrawer-paper': {
+        ...openedMixin(theme),
+        display: 'flex',
+        flexDirection: 'column',
+      },
     }),
     ...(!open && {
       ...closedMixin(theme),
-      '& .MuiDrawer-paper': closedMixin(theme),
+      '& .MuiDrawer-paper': {
+        ...closedMixin(theme),
+        display: 'flex',
+        flexDirection: 'column',
+      },
     }),
   }),
 );
 
 const Sidebar = () => {
   const { isSidebarOpen: open, toggleSidebar: handleDrawerToggle } = useLayoutContext();
+  const { balance } = useUserContext();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -112,6 +123,24 @@ const Sidebar = () => {
           </ListItem>
         ))}
       </List>
+      <Box sx={{ mt: 'auto', p: 0 }}>
+        <Divider />
+        <Tooltip title={`Balance: ${balance}zl`} placement="right" disableHoverListener={open}>
+            <Box
+                sx={{
+                minHeight: 48,
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                px: 2.5,
+                color: 'primary.main',
+                fontWeight: 'bold'
+                }}
+            >
+                {balance}
+            </Box>
+        </Tooltip>
+      </Box>
     </Drawer>
   );
 };

@@ -5,6 +5,7 @@ import { useRewardContext } from '../../contexts/RewardContext';
 import RewardCard from '../../components/rewards/RewardCard';
 import RewardDialog from '../../components/rewards/RewardDialog';
 import { ConfirmationDialog } from '../../components/common/ConfirmationDialog';
+import { UserBalance } from '../../components/inventory/UserBalance';
 import type { Reward } from '../../models/reward';
 
 const Inventory = () => {
@@ -44,8 +45,9 @@ const Inventory = () => {
 
   return (
     <Box sx={{ width: '100%', maxWidth: '1400px', mx: 'auto' }}>
+      <UserBalance />
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4">Inventory</Typography>
+        <Typography variant="h4">Rewards</Typography>
         <Button
           variant="contained"
           startIcon={<AddIcon />}

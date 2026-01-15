@@ -20,6 +20,7 @@ import { ActivitiesTable } from '../../components/activities/ActivitiesTable';
 import { FloatingPanel } from '../../components/common/FloatingPanel';
 import { ConfirmationDialog } from '../../components/common/ConfirmationDialog';
 import { TodoList } from '../../components/todo/TodoList';
+import { TaskRewardDialog } from '../../components/todo/TaskRewardDialog';
 import type { TodoItem } from '../../models/todo';
 
 type TabSelection = 
@@ -64,6 +65,7 @@ const Randomizer = () => {
   const [isAddActivityOpen, setIsAddActivityOpen] = useState(false);
   const [editingActivity, setEditingActivity] = useState<Activity | undefined>(undefined);
   const [todoItems, setTodoItems] = useState<TodoItem[]>([]);
+  const [isRewardDialogOpen, setIsRewardDialogOpen] = useState(false);
 
   // Context Menu State
   const [contextMenu, setContextMenu] = useState<{
@@ -161,6 +163,11 @@ const Randomizer = () => {
   };
 
   const handleToggleTodo = (id: string) => {
+    const item = todoItems.find(i => i.id === id);
+    if (item && !item.isCompleted) {
+        setIsRewardDialogOpen(true);
+    }
+
     setTodoItems((prev) => {
       const updated = prev.map((item) => {
         if (item.id === id) {
@@ -468,6 +475,12 @@ const Randomizer = () => {
         onConfirm={handleConfirmDelete}
         confirmLabel="Delete"
         confirmColor="error"
+      />
+      
+      <TaskRewardDialog
+        open={isRewardDialogOpen}
+        onClose={() => setIsRewardDialogOpen(false)}
+        onTakeRewards={() => setIsRewardDialogOpen(false)}
       />
     </Box>
   );
