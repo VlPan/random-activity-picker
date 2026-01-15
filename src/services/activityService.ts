@@ -7,7 +7,8 @@ const ACTIVITIES_PLAYLIST_KEY = 'randomizer_activities-playlist';
 
 const mockPlaylist: ActivitiesPlaylist = {
   id: "pl-9921",
-  displayName: "Morning Wellness Routine"
+  displayName: "Morning Wellness Routine",
+  priority: 5
 };
 
 const mockActivities: Activity[] = [

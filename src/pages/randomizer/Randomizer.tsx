@@ -15,7 +15,7 @@ import type { ActivitiesPlaylist } from '../../models/playlist';
 import { ActivityDialog } from '../../components/activities/ActivityDialog';
 import { RandomActivityPicker } from '../../components/activities/RandomActivityPicker';
 import { AddPlaylistPanel } from '../../components/playlists/AddPlaylistPanel';
-import { RenamePlaylistDialog } from '../../components/playlists/RenamePlaylistDialog';
+import { EditPlaylistDialog } from '../../components/playlists/EditPlaylistDialog';
 import { ActivitiesTable } from '../../components/activities/ActivitiesTable';
 import { FloatingPanel } from '../../components/common/FloatingPanel';
 import { ConfirmationDialog } from '../../components/common/ConfirmationDialog';
@@ -72,7 +72,7 @@ const Randomizer = () => {
     playlist: ActivitiesPlaylist;
   } | null>(null);
 
-  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [playlistToAction, setPlaylistToAction] = useState<ActivitiesPlaylist | null>(null);
 
@@ -208,10 +208,10 @@ const Randomizer = () => {
     setContextMenu(null);
   };
 
-  const handleRenameClick = () => {
+  const handleEditClick = () => {
     if (contextMenu) {
       setPlaylistToAction(contextMenu.playlist);
-      setRenameDialogOpen(true);
+      setEditDialogOpen(true);
       handleCloseContextMenu();
     }
   };
@@ -224,11 +224,12 @@ const Randomizer = () => {
     }
   };
 
-  const handleConfirmRename = (newName: string) => {
+  const handleConfirmEdit = (newName: string, newPriority: number) => {
     if (playlistToAction) {
       updatePlaylist({
         ...playlistToAction,
-        displayName: newName
+        displayName: newName,
+        priority: newPriority
       });
       setPlaylistToAction(null);
     }
@@ -315,7 +316,7 @@ const Randomizer = () => {
                 <SortableTab
                   key={playlist.id}
                   sortableId={playlist.id}
-                  label={playlist.displayName}
+                  label={`${playlist.displayName} (${playlist.priority || 1})`}
                   id={`playlist-tab-${index}`}
                   aria-controls={`playlist-tabpanel-${index}`}
                   onContextMenu={(e: React.MouseEvent) => handleContextMenu(e, playlist)}
@@ -369,6 +370,8 @@ const Randomizer = () => {
         <RandomActivityPicker 
           activities={Array.from(activities.values())} 
           onActivityPicked={handleActivityPicked}
+          playlists={playlistsArray}
+          activitiesByPlaylist={activitiesByPlaylistId}
         />
         {activities.size > 0 ? (
           <ActivitiesTable 
@@ -435,11 +438,11 @@ const Randomizer = () => {
             : undefined
         }
       >
-        <MenuItem onClick={handleRenameClick}>
+        <MenuItem onClick={handleEditClick}>
           <ListItemIcon>
             <EditIcon fontSize="small" />
           </ListItemIcon>
-          <ListItemText>Rename</ListItemText>
+          <ListItemText>Edit</ListItemText>
         </MenuItem>
         <MenuItem onClick={handleDeleteClick}>
           <ListItemIcon>
@@ -449,11 +452,12 @@ const Randomizer = () => {
         </MenuItem>
       </Menu>
 
-      <RenamePlaylistDialog
-        open={renameDialogOpen}
-        onClose={() => setRenameDialogOpen(false)}
-        onConfirm={handleConfirmRename}
+      <EditPlaylistDialog
+        open={editDialogOpen}
+        onClose={() => setEditDialogOpen(false)}
+        onConfirm={handleConfirmEdit}
         currentName={playlistToAction?.displayName || ''}
+        currentPriority={playlistToAction?.priority}
       />
 
       <ConfirmationDialog
