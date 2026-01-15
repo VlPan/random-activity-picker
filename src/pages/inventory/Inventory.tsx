@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { Box, Typography, Button, Grid, CircularProgress, Alert } from "@mui/material";
 import AddIcon from '@mui/icons-material/Add';
+import CasinoIcon from '@mui/icons-material/Casino';
 import { useRewardContext } from '../../contexts/RewardContext';
 import RewardCard from '../../components/rewards/RewardCard';
 import RewardDialog from '../../components/rewards/RewardDialog';
+import { RandomRewardPicker } from '../../components/rewards/RandomRewardPicker';
 import { ConfirmationDialog } from '../../components/common/ConfirmationDialog';
 import { UserBalance } from '../../components/inventory/UserBalance';
 import type { Reward } from '../../models/reward';
@@ -11,6 +13,7 @@ import type { Reward } from '../../models/reward';
 const Inventory = () => {
   const { rewards, loading, error, addReward, updateReward, deleteReward } = useRewardContext();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isRandomPickerOpen, setIsRandomPickerOpen] = useState(false);
   const [editingReward, setEditingReward] = useState<Reward | undefined>(undefined);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
@@ -48,13 +51,22 @@ const Inventory = () => {
       <UserBalance />
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h4">Rewards</Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={handleAddClick}
-        >
-          Add Reward
-        </Button>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <Button
+            variant="outlined"
+            startIcon={<CasinoIcon />}
+            onClick={() => setIsRandomPickerOpen(true)}
+          >
+            Pick Random
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={handleAddClick}
+          >
+            Add Reward
+          </Button>
+        </Box>
       </Box>
 
       {error && (
@@ -95,6 +107,11 @@ const Inventory = () => {
         onClose={() => setIsDialogOpen(false)}
         onSave={handleSaveReward}
         reward={editingReward}
+      />
+
+      <RandomRewardPicker 
+        open={isRandomPickerOpen} 
+        onClose={() => setIsRandomPickerOpen(false)} 
       />
 
       <ConfirmationDialog
