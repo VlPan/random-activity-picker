@@ -7,6 +7,8 @@ import { CSS } from '@dnd-kit/utilities';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import BlockIcon from '@mui/icons-material/Block';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import styles from './Randomizer.module.css';
 import { useActivityContext } from '../../contexts/ActivityContext';
 import { TabPanel } from '../../components/static/tab-panel';
@@ -30,7 +32,7 @@ type TabSelection =
 
 // Sortable Tab Component
 const SortableTab = (props: any) => {
-  const { sortableId, ...other } = props;
+  const { sortableId, disabled, ...other } = props;
   const {
     attributes,
     listeners,
@@ -44,7 +46,8 @@ const SortableTab = (props: any) => {
     transform: CSS.Transform.toString(transform),
     transition,
     cursor: isDragging ? 'grabbing' : 'pointer',
-    opacity: isDragging ? 0.5 : 1,
+    opacity: isDragging ? 0.5 : (disabled ? 0.6 : 1),
+    filter: disabled ? 'grayscale(100%)' : 'none',
     zIndex: isDragging ? 1 : 'auto',
   };
 
@@ -242,6 +245,17 @@ const Randomizer = () => {
     }
   };
 
+  const handleToggleDisable = () => {
+    if (contextMenu) {
+      const playlist = contextMenu.playlist;
+      updatePlaylist({
+        ...playlist,
+        disabled: !playlist.disabled
+      });
+      handleCloseContextMenu();
+    }
+  };
+
   const handleConfirmDelete = () => {
     if (playlistToAction) {
       deletePlaylist(playlistToAction.id);
@@ -300,6 +314,11 @@ const Randomizer = () => {
     ? playlistsArray[Math.min(selectedTab.index, playlistsArray.length - 1)]?.id
     : undefined;
 
+  const enabledActivities = Array.from(activities.values()).filter(activity => {
+    const playlist = playlists.get(activity.playlistId);
+    return playlist && !playlist.disabled;
+  });
+
   return (
     <Box className={styles.randomizer} sx={{ width: '100%', position: 'relative', minHeight: '98vh' }}>
       <DndContext 
@@ -323,6 +342,7 @@ const Randomizer = () => {
                 <SortableTab
                   key={playlist.id}
                   sortableId={playlist.id}
+                  disabled={playlist.disabled}
                   label={`${playlist.displayName} (${playlist.priority || 1})`}
                   id={`playlist-tab-${index}`}
                   aria-controls={`playlist-tabpanel-${index}`}
@@ -375,20 +395,20 @@ const Randomizer = () => {
           All Activities
         </Typography>
         <RandomActivityPicker 
-          activities={Array.from(activities.values())} 
+          activities={enabledActivities} 
           onActivityPicked={handleActivityPicked}
-          playlists={playlistsArray}
+          playlists={playlistsArray.filter(p => !p.disabled)}
           activitiesByPlaylist={activitiesByPlaylistId}
         />
-        {activities.size > 0 ? (
+        {enabledActivities.length > 0 ? (
           <ActivitiesTable 
-            activities={Array.from(activities.values())} 
+            activities={enabledActivities} 
             showPlaylistColumn={true} 
             onEdit={handleEditActivity}
           />
         ) : (
           <Typography variant="body2" color="text.secondary">
-            No activities created yet.
+            No activities available (check if playlists are enabled).
           </Typography>
         )}
       </TabPanel>
@@ -450,6 +470,12 @@ const Randomizer = () => {
             <EditIcon fontSize="small" />
           </ListItemIcon>
           <ListItemText>Edit</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={handleToggleDisable}>
+          <ListItemIcon>
+            {contextMenu?.playlist.disabled ? <CheckCircleIcon fontSize="small" /> : <BlockIcon fontSize="small" />}
+          </ListItemIcon>
+          <ListItemText>{contextMenu?.playlist.disabled ? 'Enable' : 'Disable'}</ListItemText>
         </MenuItem>
         <MenuItem onClick={handleDeleteClick}>
           <ListItemIcon>
