@@ -19,7 +19,7 @@ import {
 } from '@mui/icons-material';
 import { useLayoutContext } from '../../contexts/LayoutContext';
 import { useUserContext } from '../../contexts/UserContext';
-import { Box, Typography, Tooltip } from '@mui/material';
+import { Box, Tooltip } from '@mui/material';
 
 const drawerWidth = 240;
 
