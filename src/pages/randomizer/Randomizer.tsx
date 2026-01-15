@@ -320,7 +320,7 @@ const Randomizer = () => {
   });
 
   return (
-    <Box className={styles.randomizer} sx={{ width: '100%', position: 'relative', minHeight: '98vh' }}>
+    <Box className={styles.randomizer} sx={{ width: '100%', position: 'relative', minHeight: '97vh' }}>
       <DndContext 
         sensors={sensors} 
         collisionDetection={closestCenter} 
