@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   List,
@@ -18,6 +17,7 @@ import {
   Menu as MenuIcon,
   ChevronLeft as ChevronLeftIcon,
 } from '@mui/icons-material';
+import { useLayoutContext } from '../../contexts/LayoutContext';
 
 const drawerWidth = 240;
 
@@ -69,13 +69,9 @@ const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' 
 );
 
 const Sidebar = () => {
-  const [open, setOpen] = useState(false);
+  const { isSidebarOpen: open, toggleSidebar: handleDrawerToggle } = useLayoutContext();
   const navigate = useNavigate();
   const location = useLocation();
-
-  const handleDrawerToggle = () => {
-    setOpen(!open);
-  };
 
   const menuItems = [
     { text: 'Randomizer', icon: <ShuffleIcon />, path: '/randomizer' },

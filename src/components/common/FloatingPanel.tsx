@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
-import { Paper, Box, IconButton, Typography, Collapse } from '@mui/material';
+import { Paper, Box, IconButton, Typography, Collapse, useTheme } from '@mui/material';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { useLayoutContext } from '../../contexts/LayoutContext';
 
 interface FloatingPanelProps {
   title: string;
@@ -12,6 +13,8 @@ interface FloatingPanelProps {
 
 export const FloatingPanel = ({ title, children, defaultExpanded = true }: FloatingPanelProps) => {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
+  const { sidebarWidth, isSidebarOpen } = useLayoutContext();
+  const theme = useTheme();
 
   return (
     <Paper
@@ -19,13 +22,19 @@ export const FloatingPanel = ({ title, children, defaultExpanded = true }: Float
       sx={{
         position: 'fixed',
         bottom: 20,
-        left: 20,
+        left: sidebarWidth + 24,
         zIndex: 1000,
         width: 300,
         maxHeight: '50vh',
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
+        transition: theme.transitions.create('left', {
+          easing: theme.transitions.easing.sharp,
+          duration: isSidebarOpen
+            ? theme.transitions.duration.enteringScreen
+            : theme.transitions.duration.leavingScreen,
+        }),
       }}
     >
       <Box
