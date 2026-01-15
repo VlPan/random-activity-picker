@@ -8,21 +8,26 @@ import {
 } from "react-router-dom";
 import App from "./App.tsx";
 import Randomizer from '../pages/randomizer/Randomizer.tsx';
+import Inventory from '../pages/inventory/Inventory.tsx';
 import { ThemeProvider } from '@mui/material/styles';
 import {theme} from './theme.ts';
 
 const router = createHashRouter([
   {
     path: "/",
-    element: <Navigate to="/randomizer" replace />,
-  },
-  {
-    path: "/randomizer",
     element: <App />,
     children: [
       {
         index: true,
+        element: <Navigate to="/randomizer" replace />,
+      },
+      {
+        path: "randomizer",
         element: <Randomizer />,
+      },
+      {
+        path: "inventory",
+        element: <Inventory />,
       },
     ],
   },
