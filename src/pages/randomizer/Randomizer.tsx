@@ -156,10 +156,12 @@ const Randomizer = () => {
   };
 
   const handleActivityPicked = (activity: Activity) => {
+    const playlist = playlists.get(activity.playlistId);
     const newItem: TodoItem = {
       id: crypto.randomUUID(),
       activityId: activity.id,
       displayName: activity.displayName,
+      playlistName: playlist?.displayName || 'Unknown',
       isCompleted: false,
     };
     setTodoItems((prev) => [...prev, newItem]);
@@ -446,7 +448,7 @@ const Randomizer = () => {
       />
 
       {todoItems.length > 0 && (
-        <FloatingPanel title="Session Todos">
+        <FloatingPanel title="Session Todos" width={400}>
           <TodoList
             items={todoItems}
             onToggleComplete={handleToggleTodo}

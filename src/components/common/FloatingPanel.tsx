@@ -9,9 +9,10 @@ interface FloatingPanelProps {
   title: string;
   children: ReactNode;
   defaultExpanded?: boolean;
+  width?: number | string;
 }
 
-export const FloatingPanel = ({ title, children, defaultExpanded = true }: FloatingPanelProps) => {
+export const FloatingPanel = ({ title, children, defaultExpanded = true, width = 300 }: FloatingPanelProps) => {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
   const { sidebarWidth, isSidebarOpen } = useLayoutContext();
   const theme = useTheme();
@@ -24,7 +25,7 @@ export const FloatingPanel = ({ title, children, defaultExpanded = true }: Float
         bottom: 20,
         left: sidebarWidth + 24,
         zIndex: 1000,
-        width: 300,
+        width: width,
         maxHeight: '50vh',
         display: 'flex',
         flexDirection: 'column',

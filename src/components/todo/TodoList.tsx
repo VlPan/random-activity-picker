@@ -41,6 +41,20 @@ export const TodoList = ({ items, onToggleComplete, onDelete }: TodoListProps) =
       ),
     },
     {
+      id: 'playlistName',
+      label: 'Playlist',
+      minWidth: 100,
+      render: (item) => (
+        <span style={{ 
+          textDecoration: item.isCompleted ? 'line-through' : 'none',
+          color: item.isCompleted ? 'text.disabled' : 'inherit',
+          opacity: item.isCompleted ? 0.6 : 1
+        }}>
+          {item.playlistName}
+        </span>
+      ),
+    },
+    {
       id: 'actions',
       label: '',
       minWidth: 40,
