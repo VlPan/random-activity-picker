@@ -30,7 +30,7 @@ export const UserBalance = () => {
     if (!isNaN(val) && val > 0) {
       const finalAmount = modifyMode === 'add' ? val : -val;
       if (modifyType === 'balance') {
-        updateBalance(finalAmount, 'Manual Adjustment');
+        updateBalance(finalAmount, 'Manual Adjustment', 'Manual');
       } else {
         updatePoints(finalAmount, 'Manual Adjustment');
       }

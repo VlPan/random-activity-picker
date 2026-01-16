@@ -121,7 +121,7 @@ const Bills = () => {
 
   const handleConfirmCover = () => {
     if (billToCover) {
-      updateBalance(-coverCost, `Bill Payment: ${billToCover.name}`);
+      updateBalance(-coverCost, `Bill Payment: ${billToCover.name}`, 'Bill', billToCover.isBasicNecessity);
       updateBill({
         ...billToCover,
         lastCoveredDate: new Date().toISOString()
@@ -132,7 +132,7 @@ const Bills = () => {
   };
 
   const getConfirmationContent = () => {
-    if (!billToCover) return '';
+    if (!billToCover) return <></>;
     
     if (billToCover.cost === null) {
       return (
@@ -158,7 +158,11 @@ const Bills = () => {
       );
     }
 
-    return `Are you sure you want to cover "${billToCover.name}" for ${coverCost.toFixed(2)} ZL? (Original: ${billToCover.cost.toFixed(2)} ZL)`;
+    return (
+      <Typography>
+        Are you sure you want to cover "{billToCover.name}" for {coverCost.toFixed(2)} ZL? (Original: {billToCover.cost.toFixed(2)} ZL)
+      </Typography>
+    );
   };
 
   const columns: ColumnDef<Bill>[] = [

@@ -11,12 +11,16 @@ interface RewardSettings {
   basicNecessityDiscount: number; // Percentage discount (0-100)
 }
 
+export type SpendingCategory = 'Manual' | 'Bill' | 'Anket' | 'Shop' | 'Other';
+
 export interface HistoryItem {
   id: string;
   date: string;
   amount: number;
   type: 'points' | 'balance';
   reason: string;
+  category?: SpendingCategory;
+  isEssential?: boolean;
   count?: number;
   duration?: number; // In seconds
 }
@@ -28,8 +32,8 @@ interface UserContextType {
   rewardSettings: RewardSettings;
   history: HistoryItem[];
   lastAnketDate: string | null; // ISO date string (date only, e.g., "2026-01-15")
-  updateBalance: (amount: number, reason?: string) => void;
-  updateBalanceWithDate: (amount: number, reason: string, customDate: string) => void;
+  updateBalance: (amount: number, reason?: string, category?: SpendingCategory, isEssential?: boolean) => void;
+  updateBalanceWithDate: (amount: number, reason: string, customDate: string, category?: SpendingCategory, isEssential?: boolean) => void;
   updatePoints: (amount: number, reason?: string, count?: number, duration?: number) => void;
   exchangePoints: (pointsToExchange: number) => void;
   setLuckyNumber: (num: number) => void;
@@ -94,7 +98,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
-  const addHistoryItem = (amount: number, type: 'points' | 'balance', reason: string, count?: number, duration?: number) => {
+  const addHistoryItem = (amount: number, type: 'points' | 'balance', reason: string, count?: number, duration?: number, category?: SpendingCategory, isEssential?: boolean) => {
     const newItem: HistoryItem = {
         id: crypto.randomUUID(),
         date: new Date().toISOString(),
@@ -102,7 +106,9 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         type,
         reason,
         count,
-        duration
+        duration,
+        category,
+        isEssential
     };
     
     setHistory(prev => {
@@ -112,13 +118,15 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
-  const addHistoryItemWithDate = (amount: number, type: 'points' | 'balance', reason: string, customDate: string) => {
+  const addHistoryItemWithDate = (amount: number, type: 'points' | 'balance', reason: string, customDate: string, category?: SpendingCategory, isEssential?: boolean) => {
     const newItem: HistoryItem = {
         id: crypto.randomUUID(),
         date: customDate,
         amount,
         type,
-        reason
+        reason,
+        category,
+        isEssential
     };
     
     setHistory(prev => {
@@ -128,22 +136,22 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
-  const updateBalance = (amount: number, reason: string = 'Manual Adjustment') => {
+  const updateBalance = (amount: number, reason: string = 'Manual Adjustment', category: SpendingCategory = 'Manual', isEssential?: boolean) => {
     setBalance((prev) => {
       const newBalance = prev + amount;
       localStorage.setItem('userBalance', newBalance.toString());
       return newBalance;
     });
-    addHistoryItem(amount, 'balance', reason);
+    addHistoryItem(amount, 'balance', reason, undefined, undefined, category, isEssential);
   };
 
-  const updateBalanceWithDate = (amount: number, reason: string, customDate: string) => {
+  const updateBalanceWithDate = (amount: number, reason: string, customDate: string, category: SpendingCategory = 'Manual', isEssential?: boolean) => {
     setBalance((prev) => {
       const newBalance = prev + amount;
       localStorage.setItem('userBalance', newBalance.toString());
       return newBalance;
     });
-    addHistoryItemWithDate(amount, 'balance', reason, customDate);
+    addHistoryItemWithDate(amount, 'balance', reason, customDate, category, isEssential);
   };
 
   const updatePoints = (amount: number, reason: string = 'Manual Adjustment', count?: number, duration?: number) => {
@@ -167,7 +175,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     // "Exchanged 100pts" (points -100) and "Exchanged for 1ZL" (balance +1).
     
     updatePoints(-pointsToExchange, 'Currency Exchange');
-    updateBalance(zlAmount, 'Currency Exchange');
+    updateBalance(zlAmount, 'Currency Exchange', 'Other');
   };
 
   const setLuckyNumber = (num: number) => {

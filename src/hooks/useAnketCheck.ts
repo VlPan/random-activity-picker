@@ -84,12 +84,12 @@ export const useAnketCheck = () => {
     // Process Basic Spending (with discount)
     if (basicSpending > 0) {
       const discountedAmount = calculateDiscountedCost(basicSpending);
-      updateBalanceWithDate(-discountedAmount, 'Bill Payment: Daily Anket - Basics', dateIso);
+      updateBalanceWithDate(-discountedAmount, 'Bill Payment: Daily Anket - Basics', dateIso, 'Anket', true);
     }
 
     // Process Non-Essential Spending (no discount)
     if (nonEssentialSpending > 0) {
-      updateBalanceWithDate(-nonEssentialSpending, 'Bill Payment: Daily Anket - Non-Essential', dateIso);
+      updateBalanceWithDate(-nonEssentialSpending, 'Bill Payment: Daily Anket - Non-Essential', dateIso, 'Anket', false);
     }
 
     // Update lastAnketDate to current day

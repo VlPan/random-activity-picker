@@ -390,26 +390,76 @@ const Statistics = () => {
     const categories = {
       Shop: 0,
       Bills: 0,
+      Manual: 0,
+      Anket: 0,
       Other: 0
     };
 
     expenses.forEach(item => {
       const amount = Math.abs(item.amount);
-      const reason = item.reason || '';
-      
-      if (reason.includes('Bought')) {
-        categories.Shop += amount;
-      } else if (reason.includes('Bill') || reason.includes('Paid')) {
-        categories.Bills += amount;
+      const category = item.category;
+
+      if (category) {
+        if (category === 'Shop') categories.Shop += amount;
+        else if (category === 'Bill') categories.Bills += amount;
+        else if (category === 'Manual') categories.Manual += amount;
+        else if (category === 'Anket') categories.Anket += amount;
+        else categories.Other += amount;
       } else {
-        categories.Other += amount;
+        // Legacy fallback
+        const reason = item.reason || '';
+        if (reason.includes('Bought')) {
+          categories.Shop += amount;
+        } else if (reason.includes('Bill') || reason.includes('Paid')) {
+          categories.Bills += amount;
+        } else {
+          categories.Other += amount;
+        }
       }
     });
 
     return [
       { name: 'Shop', value: Number(categories.Shop.toFixed(2)) },
       { name: 'Bills', value: Number(categories.Bills.toFixed(2)) },
+      { name: 'Manual', value: Number(categories.Manual.toFixed(2)) },
+      { name: 'Anket', value: Number(categories.Anket.toFixed(2)) },
       { name: 'Other', value: Number(categories.Other.toFixed(2)) }
+    ].filter(item => item.value > 0);
+  }, [history, timeRange]);
+
+  const essentialData = useMemo(() => {
+    const now = new Date();
+    now.setHours(23, 59, 59, 999);
+    const startDate = getStartDate(timeRange, now);
+
+    // Filter relevant history items (expenses only)
+    const expenses = history.filter(item => {
+      if (item.type !== 'balance') return false;
+      if (item.amount >= 0) return false;
+      
+      const itemDate = new Date(item.date);
+      return itemDate >= startDate && itemDate <= now;
+    });
+
+    let essential = 0;
+    let nonEssential = 0;
+    let unknown = 0;
+
+    expenses.forEach(item => {
+      const amount = Math.abs(item.amount);
+      if (item.isEssential === true) {
+        essential += amount;
+      } else if (item.isEssential === false) {
+        nonEssential += amount;
+      } else {
+        unknown += amount;
+      }
+    });
+
+    return [
+      { name: 'Essential', value: Number(essential.toFixed(2)) },
+      { name: 'Non-Essential', value: Number(nonEssential.toFixed(2)) },
+      { name: 'Unknown', value: Number(unknown.toFixed(2)) }
     ].filter(item => item.value > 0);
   }, [history, timeRange]);
 
@@ -461,7 +511,15 @@ const Statistics = () => {
   const SPENDING_COLORS = {
     Shop: '#1976d2',
     Bills: '#ed6c02',
+    Manual: '#d32f2f',
+    Anket: '#9c27b0',
     Other: '#9e9e9e'
+  };
+
+  const ESSENTIAL_COLORS = {
+    'Essential': '#2e7d32',
+    'Non-Essential': '#d32f2f',
+    'Unknown': '#9e9e9e'
   };
 
   const INCOME_COLORS = {
@@ -784,6 +842,40 @@ const Statistics = () => {
           )}
         </Paper>
       </Box>
+
+      {/* Essential vs Non-Essential Breakdown */}
+      <Paper sx={{ p: 3, mb: 3 }}>
+        <Typography variant="h6" gutterBottom>Essential vs Non-Essential Spending</Typography>
+        
+        {essentialData.length > 0 ? (
+          <Box sx={{ height: 400, width: '100%' }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={essentialData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, percent }: { name?: string | number; percent?: number }) => `${name} ${(percent ? percent * 100 : 0).toFixed(0)}%`}
+                  outerRadius={120}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {essentialData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={ESSENTIAL_COLORS[entry.name as keyof typeof ESSENTIAL_COLORS]} />
+                  ))}
+                </Pie>
+                <Tooltip formatter={(value: number | undefined) => [`${value} ZL`, undefined]} />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          </Box>
+        ) : (
+          <Box sx={{ py: 4, textAlign: 'center' }}>
+            <Typography color="text.secondary">No expenses in this period</Typography>
+          </Box>
+        )}
+      </Paper>
     </Box>
   );
 };

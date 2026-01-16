@@ -27,7 +27,7 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
   onClose,
   confirmLabel = 'Confirm',
   confirmColor = 'primary',
-  disabled = false,
+  disabled = false, 
 }) => {
   return (
     <Dialog

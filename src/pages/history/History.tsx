@@ -12,6 +12,7 @@ import {
   AccordionDetails, 
   Button, 
   Paper,
+  Chip,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import DeleteSweepIcon from '@mui/icons-material/DeleteSweep';
@@ -63,7 +64,27 @@ const History = () => {
             </Avatar>
           </ListItemAvatar>
           <ListItemText 
-            primary={item.reason} 
+            primary={
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                <Typography component="span" variant="body1">{item.reason}</Typography>
+                {item.category && (
+                  <Chip 
+                    label={item.category} 
+                    size="small" 
+                    sx={{ height: 20, fontSize: '0.7rem' }} 
+                  />
+                )}
+                {item.isEssential !== undefined && (
+                  <Chip
+                    label={item.isEssential ? 'Essential' : 'Non-Essential'}
+                    size="small"
+                    color={item.isEssential ? 'success' : 'warning'}
+                    variant="outlined"
+                    sx={{ height: 20, fontSize: '0.7rem' }}
+                  />
+                )}
+              </Box>
+            }
             secondary={new Date(item.date).toLocaleString()} 
           />
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
