@@ -121,11 +121,11 @@ const Statistics = () => {
               <Tooltip 
                 contentStyle={{ backgroundColor: theme.palette.background.paper, color: theme.palette.text.primary }}
                 itemStyle={{ color: theme.palette.primary.main }}
-                formatter={(value: number) => [value, 'Rewards']}
+                formatter={(value: number | undefined) => [value, 'Rewards']}
                 labelFormatter={(label) => `Date: ${label}`}
               />
               <Bar dataKey="count" fill={theme.palette.primary.main}>
-                {chartData.map((entry, index) => (
+                {chartData.map((_, index) => (
                     <Cell key={`cell-${index}`} fill={theme.palette.primary.main} />
                 ))}
               </Bar>
