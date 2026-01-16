@@ -16,6 +16,7 @@ import {
   Inventory as InventoryIcon,
   Menu as MenuIcon,
   ChevronLeft as ChevronLeftIcon,
+  Settings as SettingsIcon,
 } from '@mui/icons-material';
 import { useLayoutContext } from '../../contexts/LayoutContext';
 import { useUserContext } from '../../contexts/UserContext';
@@ -80,13 +81,14 @@ const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' 
 
 const Sidebar = () => {
   const { isSidebarOpen: open, toggleSidebar: handleDrawerToggle } = useLayoutContext();
-  const { balance } = useUserContext();
+  const { balance, luckyNumber } = useUserContext();
   const navigate = useNavigate();
   const location = useLocation();
 
   const menuItems = [
     { text: 'Randomizer', icon: <ShuffleIcon />, path: '/randomizer' },
     { text: 'Inventory', icon: <InventoryIcon />, path: '/inventory' },
+    { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
   ];
 
   return (
@@ -124,6 +126,22 @@ const Sidebar = () => {
         ))}
       </List>
       <Box sx={{ mt: 'auto', p: 0 }}>
+        <Divider />
+        <Tooltip title={`Lucky Number: ${luckyNumber}`} placement="right" disableHoverListener={open}>
+            <Box
+                sx={{
+                minHeight: 48,
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                px: 2.5,
+                color: 'secondary.main',
+                fontWeight: 'bold'
+                }}
+            >
+                {luckyNumber}
+            </Box>
+        </Tooltip>
         <Divider />
         <Tooltip title={`Balance: ${balance}zl`} placement="right" disableHoverListener={open}>
             <Box
