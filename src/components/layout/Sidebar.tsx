@@ -20,6 +20,7 @@ import {
 } from '@mui/icons-material';
 import { useLayoutContext } from '../../contexts/LayoutContext';
 import { useUserContext } from '../../contexts/UserContext';
+import { useTodoContext } from '../../contexts/TodoContext';
 import { Box, Tooltip } from '@mui/material';
 
 const drawerWidth = 240;
@@ -82,8 +83,14 @@ const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' 
 const Sidebar = () => {
   const { isSidebarOpen: open, toggleSidebar: handleDrawerToggle } = useLayoutContext();
   const { balance, luckyNumber } = useUserContext();
+  const { activeTaskId, activeTaskTime, isPaused, pauseTimer, resumeTimer, getFormattedTime } = useTodoContext();
   const navigate = useNavigate();
   const location = useLocation();
+
+  const handleTimerClick = () => {
+    if (isPaused) resumeTimer();
+    else pauseTimer();
+  };
 
   const menuItems = [
     { text: 'Randomizer', icon: <ShuffleIcon />, path: '/randomizer' },
@@ -126,6 +133,32 @@ const Sidebar = () => {
         ))}
       </List>
       <Box sx={{ mt: 'auto', p: 0 }}>
+        {activeTaskId && (
+          <>
+            <Divider />
+            <Tooltip title={isPaused ? "Resume" : "Pause"} placement="right" disableHoverListener={open}>
+                <Box
+                    onClick={handleTimerClick}
+                    sx={{
+                    minHeight: 48,
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    px: 2.5,
+                    color: isPaused ? 'warning.main' : 'success.main',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    fontSize: open ? 'inherit' : '0.75rem',
+                    '&:hover': {
+                        bgcolor: 'action.hover'
+                    }
+                    }}
+                >
+                    {getFormattedTime(activeTaskTime)}
+                </Box>
+            </Tooltip>
+          </>
+        )}
         <Divider />
         <Tooltip title={`Lucky Number: ${luckyNumber}`} placement="right" disableHoverListener={open}>
             <Box

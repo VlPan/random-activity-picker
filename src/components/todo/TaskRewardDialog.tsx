@@ -1,16 +1,19 @@
 import { useState, useEffect } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Slider, Typography, Box } from '@mui/material';
 import { useUserContext } from '../../contexts/UserContext';
+import { useTodoContext } from '../../contexts/TodoContext';
 import { useRewardGeneration, getRewardStyle } from '../../hooks/useRewardGeneration';
 
 interface TaskRewardDialogProps {
   open: boolean;
   onClose: () => void;
   onTakeRewards: () => void;
+  timeSpent?: number;
 }
 
-export const TaskRewardDialog = ({ open, onClose, onTakeRewards }: TaskRewardDialogProps) => {
+export const TaskRewardDialog = ({ open, onClose, onTakeRewards, timeSpent }: TaskRewardDialogProps) => {
   const { updateBalance } = useUserContext();
+  const { getFormattedTime } = useTodoContext();
   const { step, rewards, startGeneration, reset } = useRewardGeneration();
   const [numRewards, setNumRewards] = useState<number>(1);
 
@@ -36,6 +39,11 @@ export const TaskRewardDialog = ({ open, onClose, onTakeRewards }: TaskRewardDia
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle>Task Complete! Claim Rewards</DialogTitle>
       <DialogContent>
+        {timeSpent !== undefined && (
+            <Typography variant="body2" color="text.secondary" align="center" sx={{ mt: 1 }}>
+                Time tracked: {getFormattedTime(timeSpent)}
+            </Typography>
+        )}
         {step === 'input' && (
           <Box sx={{ p: 2, textAlign: 'center' }}>
             <Typography gutterBottom>How difficult was this task? (Rewards: {numRewards})</Typography>

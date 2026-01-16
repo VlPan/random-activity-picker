@@ -5,4 +5,6 @@ export interface TodoItem {
   playlistName: string;
   isCompleted: boolean;
   completedAt?: Date;
+  timeSpent?: number; // In seconds
+  lastStartedAt?: Date;
 }

@@ -4,6 +4,7 @@ import { ActivityProvider } from "../contexts/ActivityContext";
 import { RewardProvider } from "../contexts/RewardContext";
 import { LayoutProvider } from "../contexts/LayoutContext";
 import { UserProvider } from "../contexts/UserContext";
+import { TodoProvider } from "../contexts/TodoContext";
 import { Box, CssBaseline } from "@mui/material";
 import Sidebar from "../components/layout/Sidebar";
 
@@ -13,13 +14,15 @@ function App() {
       <RewardProvider>
         <LayoutProvider>
           <UserProvider>
-            <Box sx={{ display: "flex" }}>
-              <CssBaseline />
-              <Sidebar />
-              <Box component="main" sx={{ flexGrow: 1, p: 3, width: '100%' }}>
-                <Outlet />
+            <TodoProvider>
+              <Box sx={{ display: "flex" }}>
+                <CssBaseline />
+                <Sidebar />
+                <Box component="main" sx={{ flexGrow: 1, p: 3, width: '100%' }}>
+                  <Outlet />
+                </Box>
               </Box>
-            </Box>
+            </TodoProvider>
           </UserProvider>
         </LayoutProvider>
       </RewardProvider>

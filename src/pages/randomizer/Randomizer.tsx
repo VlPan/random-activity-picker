@@ -11,6 +11,7 @@ import BlockIcon from '@mui/icons-material/Block';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import styles from './Randomizer.module.css';
 import { useActivityContext } from '../../contexts/ActivityContext';
+import { useTodoContext } from '../../contexts/TodoContext';
 import { TabPanel } from '../../components/static/tab-panel';
 import type { Activity } from '../../models/activity';
 import type { ActivitiesPlaylist } from '../../models/playlist';
@@ -64,11 +65,13 @@ const SortableTab = (props: any) => {
 
 const Randomizer = () => {
   const { playlists, loading, activities, updatePlaylist, deletePlaylist, reorderPlaylists } = useActivityContext();
+  const { todoItems, addTodo, removeTodo, toggleComplete } = useTodoContext();
   const [selectedTab, setSelectedTab] = useState<TabSelection>({ type: 'playlist', index: 0 });
   const [isAddActivityOpen, setIsAddActivityOpen] = useState(false);
   const [editingActivity, setEditingActivity] = useState<Activity | undefined>(undefined);
-  const [todoItems, setTodoItems] = useState<TodoItem[]>([]);
+  // Removed local todoItems state
   const [isRewardDialogOpen, setIsRewardDialogOpen] = useState(false);
+  const [completedTaskId, setCompletedTaskId] = useState<string | null>(null);
 
   // Context Menu State
   const [contextMenu, setContextMenu] = useState<{
@@ -163,44 +166,22 @@ const Randomizer = () => {
       displayName: activity.displayName,
       playlistName: playlist?.displayName || 'Unknown',
       isCompleted: false,
+      timeSpent: 0
     };
-    setTodoItems((prev) => [...prev, newItem]);
+    addTodo(newItem);
   };
 
   const handleToggleTodo = (id: string) => {
     const item = todoItems.find(i => i.id === id);
     if (item && !item.isCompleted) {
+        setCompletedTaskId(id);
         setIsRewardDialogOpen(true);
     }
-
-    setTodoItems((prev) => {
-      const updated = prev.map((item) => {
-        if (item.id === id) {
-          const isCompleted = !item.isCompleted;
-          return {
-            ...item,
-            isCompleted,
-            completedAt: isCompleted ? new Date() : undefined,
-          };
-        }
-        return item;
-      });
-
-      // Sort: incomplete first, then completed by date (newest first)
-      return updated.sort((a, b) => {
-        if (a.isCompleted === b.isCompleted) {
-          if (a.isCompleted && a.completedAt && b.completedAt) {
-            return b.completedAt.getTime() - a.completedAt.getTime();
-          }
-          return 0;
-        }
-        return a.isCompleted ? 1 : -1;
-      });
-    });
+    toggleComplete(id);
   };
 
   const handleDeleteTodo = (id: string) => {
-    setTodoItems((prev) => prev.filter((item) => item.id !== id));
+    removeTodo(id);
   };
 
   const handleContextMenu = (event: React.MouseEvent, playlist: ActivitiesPlaylist) => {
@@ -507,8 +488,15 @@ const Randomizer = () => {
       
       <TaskRewardDialog
         open={isRewardDialogOpen}
-        onClose={() => setIsRewardDialogOpen(false)}
-        onTakeRewards={() => setIsRewardDialogOpen(false)}
+        onClose={() => {
+            setIsRewardDialogOpen(false);
+            setCompletedTaskId(null);
+        }}
+        onTakeRewards={() => {
+            setIsRewardDialogOpen(false);
+            setCompletedTaskId(null);
+        }}
+        timeSpent={todoItems.find(i => i.id === completedTaskId)?.timeSpent}
       />
     </Box>
   );
