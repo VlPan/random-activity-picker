@@ -21,6 +21,7 @@ import {
   ShoppingCart as ShoppingCartIcon,
   History as HistoryIcon,
   BarChart as BarChartIcon,
+  AccountTree as AccountTreeIcon,
 } from '@mui/icons-material';
 import { useLayoutContext } from '../../contexts/LayoutContext';
 import { useUserContext } from '../../contexts/UserContext';
@@ -98,6 +99,7 @@ const Sidebar = () => {
 
   const menuItems = [
     { text: 'Randomizer', icon: <ShuffleIcon />, path: '/randomizer' },
+    { text: 'Projects', icon: <AccountTreeIcon />, path: '/projects' },
     { text: 'Inventory', icon: <InventoryIcon />, path: '/inventory' },
     { text: 'Statistics', icon: <BarChartIcon />, path: '/statistics' },
     { text: 'Bills', icon: <ReceiptIcon />, path: '/bills' },

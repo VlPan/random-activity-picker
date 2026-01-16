@@ -14,6 +14,7 @@ import Bills from '../pages/bills/Bills.tsx';
 import Shop from '../pages/shop/Shop.tsx';
 import History from '../pages/history/History.tsx';
 import Statistics from '../pages/statistics/Statistics.tsx';
+import Projects from '../pages/projects/Projects.tsx';
 import { ThemeProvider } from '@mui/material/styles';
 import {theme} from './theme.ts';
 
@@ -49,6 +50,10 @@ const router = createHashRouter([
       {
         path: "statistics",
         element: <Statistics />,
+      },
+      {
+        path: "projects",
+        element: <Projects />,
       },
       {
         path: "settings",

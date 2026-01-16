@@ -11,7 +11,7 @@ interface RewardSettings {
   basicNecessityDiscount: number; // Percentage discount (0-100)
 }
 
-export type SpendingCategory = 'Manual' | 'Bill' | 'Anket' | 'Shop' | 'Other';
+export type SpendingCategory = 'Manual' | 'Bill' | 'Anket' | 'Shop' | 'Project' | 'Other';
 
 export interface HistoryItem {
   id: string;
@@ -34,7 +34,7 @@ interface UserContextType {
   lastAnketDate: string | null; // ISO date string (date only, e.g., "2026-01-15")
   updateBalance: (amount: number, reason?: string, category?: SpendingCategory, isEssential?: boolean) => void;
   updateBalanceWithDate: (amount: number, reason: string, customDate: string, category?: SpendingCategory, isEssential?: boolean) => void;
-  updatePoints: (amount: number, reason?: string, count?: number, duration?: number) => void;
+  updatePoints: (amount: number, reason?: string, count?: number, duration?: number, category?: SpendingCategory) => void;
   exchangePoints: (pointsToExchange: number) => void;
   setLuckyNumber: (num: number) => void;
   updateRewardSettings: (settings: RewardSettings) => void;
@@ -154,13 +154,13 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     addHistoryItemWithDate(amount, 'balance', reason, customDate, category, isEssential);
   };
 
-  const updatePoints = (amount: number, reason: string = 'Manual Adjustment', count?: number, duration?: number) => {
+  const updatePoints = (amount: number, reason: string = 'Manual Adjustment', count?: number, duration?: number, category?: SpendingCategory) => {
     setPoints((prev) => {
       const newPoints = prev + amount;
       localStorage.setItem('userPoints', newPoints.toString());
       return newPoints;
     });
-    addHistoryItem(amount, 'points', reason, count, duration);
+    addHistoryItem(amount, 'points', reason, count, duration, category);
   };
 
   const exchangePoints = (pointsToExchange: number) => {

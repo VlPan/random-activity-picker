@@ -7,6 +7,7 @@ import { UserProvider } from "../contexts/UserContext";
 import { TodoProvider } from "../contexts/TodoContext";
 import { BillProvider } from "../contexts/BillContext";
 import { ShopProvider } from "../contexts/ShopContext";
+import { ProjectProvider } from "../contexts/ProjectContext";
 import { Box, CssBaseline } from "@mui/material";
 import Sidebar from "../components/layout/Sidebar";
 import { DailyAnketDialog } from "../components/anket/DailyAnketDialog";
@@ -55,7 +56,9 @@ function App() {
             <BillProvider>
               <ShopProvider>
                 <TodoProvider>
-                  <AppContent />
+                  <ProjectProvider>
+                    <AppContent />
+                  </ProjectProvider>
                 </TodoProvider>
               </ShopProvider>
             </BillProvider>

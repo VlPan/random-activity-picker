@@ -482,6 +482,7 @@ const Statistics = () => {
       TaskRewards: 0,
       RandomRewards: 0,
       Exchange: 0,
+      Projects: 0,
       Other: 0
     };
 
@@ -489,7 +490,9 @@ const Statistics = () => {
       const amount = item.amount;
       const reason = item.reason || '';
       
-      if (reason.includes('Task Reward')) {
+      if (item.category === 'Project' || reason.startsWith('Project:')) {
+        categories.Projects += amount;
+      } else if (reason.includes('Task Reward')) {
         categories.TaskRewards += amount;
       } else if (reason === 'Random Reward') {
         categories.RandomRewards += amount;
@@ -501,8 +504,9 @@ const Statistics = () => {
     });
 
     return [
-      { name: 'Task Rewards', value: Number(categories.TaskRewards.toFixed(2)) },
-      { name: 'Random Rewards', value: Number(categories.RandomRewards.toFixed(2)) },
+      { name: 'Projects', value: Number(categories.Projects.toFixed(2)) },
+      { name: 'Tasks', value: Number(categories.TaskRewards.toFixed(2)) },
+      { name: 'Randoms', value: Number(categories.RandomRewards.toFixed(2)) },
       { name: 'Exchange', value: Number(categories.Exchange.toFixed(2)) },
       { name: 'Other', value: Number(categories.Other.toFixed(2)) }
     ].filter(item => item.value > 0);
@@ -523,8 +527,9 @@ const Statistics = () => {
   };
 
   const INCOME_COLORS = {
-    'Task Rewards': '#9c27b0',
-    'Random Rewards': '#2e7d32',
+    'Projects': '#2196f3',
+    'Tasks': '#9c27b0',
+    'Randoms': '#2e7d32',
     'Exchange': '#ff9800',
     'Other': '#607d8b'
   };
