@@ -204,10 +204,77 @@ const Statistics = () => {
     ].filter(item => item.value > 0);
   }, [history, timeRange]);
 
+  const incomeSourceData = useMemo(() => {
+    const now = new Date();
+    now.setHours(23, 59, 59, 999);
+
+    let startDate = new Date();
+    startDate.setHours(0, 0, 0, 0);
+
+    if (timeRange === 'week') {
+      const day = startDate.getDay();
+      const diff = startDate.getDate() - day + (day === 0 ? -6 : 1);
+      startDate.setDate(diff);
+    } else if (timeRange === '7days') {
+      startDate.setDate(startDate.getDate() - 6);
+    } else if (timeRange === '30days') {
+      startDate.setDate(startDate.getDate() - 29);
+    } else if (timeRange === '100days') {
+      startDate.setDate(startDate.getDate() - 99);
+    } else if (timeRange === '300days') {
+      startDate.setDate(startDate.getDate() - 299);
+    }
+
+    // Filter relevant history items (income only, points only)
+    const incomeItems = history.filter(item => {
+      if (item.amount <= 0) return false;
+      if (item.type !== 'points') return false;
+      
+      const itemDate = new Date(item.date);
+      return itemDate >= startDate && itemDate <= now;
+    });
+
+    const categories = {
+      TaskRewards: 0,
+      RandomRewards: 0,
+      Exchange: 0,
+      Other: 0
+    };
+
+    incomeItems.forEach(item => {
+      const amount = item.amount;
+      const reason = item.reason || '';
+      
+      if (reason.includes('Task Reward')) {
+        categories.TaskRewards += amount;
+      } else if (reason === 'Random Reward') {
+        categories.RandomRewards += amount;
+      } else if (reason.includes('Exchange') || reason.includes('Currency')) {
+        categories.Exchange += amount;
+      } else {
+        categories.Other += amount;
+      }
+    });
+
+    return [
+      { name: 'Task Rewards', value: Number(categories.TaskRewards.toFixed(2)) },
+      { name: 'Random Rewards', value: Number(categories.RandomRewards.toFixed(2)) },
+      { name: 'Exchange', value: Number(categories.Exchange.toFixed(2)) },
+      { name: 'Other', value: Number(categories.Other.toFixed(2)) }
+    ].filter(item => item.value > 0);
+  }, [history, timeRange]);
+
   const SPENDING_COLORS = {
     Shop: '#1976d2',
     Bills: '#ed6c02',
     Other: '#9e9e9e'
+  };
+
+  const INCOME_COLORS = {
+    'Task Rewards': '#9c27b0',
+    'Random Rewards': '#2e7d32',
+    'Exchange': '#ff9800',
+    'Other': '#607d8b'
   };
 
   const handleRangeChange = (_event: React.MouseEvent<HTMLElement>, newRange: TimeRange | null) => {
@@ -303,38 +370,77 @@ const Statistics = () => {
         </Box>
       </Paper>
 
-      <Paper sx={{ p: 3, mb: 3 }}>
-        <Typography variant="h6" gutterBottom>Spending Breakdown</Typography>
-        
-        {spendingData.length > 0 ? (
-          <Box sx={{ height: 400, width: '100%' }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={spendingData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }: { name?: string | number; percent?: number }) => `${name} ${(percent ? percent * 100 : 0).toFixed(0)}%`}
-                  outerRadius={150}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {spendingData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={SPENDING_COLORS[entry.name as keyof typeof SPENDING_COLORS]} />
-                  ))}
-                </Pie>
-                <Tooltip formatter={(value: number | undefined) => [`${value} ZL`, undefined]} />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          </Box>
-        ) : (
-          <Box sx={{ py: 4, textAlign: 'center' }}>
-            <Typography color="text.secondary">No expenses in this period</Typography>
-          </Box>
-        )}
-      </Paper>
+      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3, mb: 3 }}>
+        {/* Income Breakdown */}
+        <Paper sx={{ p: 3, flex: 1 }}>
+          <Typography variant="h6" gutterBottom>Income Sources</Typography>
+          
+          {incomeSourceData.length > 0 ? (
+            <Box sx={{ height: 400, width: '100%' }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={incomeSourceData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }: { name?: string | number; percent?: number }) => `${name} ${(percent ? percent * 100 : 0).toFixed(0)}%`}
+                    outerRadius={120}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {incomeSourceData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={INCOME_COLORS[entry.name as keyof typeof INCOME_COLORS]} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value: number | undefined) => {
+                     return [`${value} Pts`, undefined];
+                  }} />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            </Box>
+          ) : (
+            <Box sx={{ py: 4, textAlign: 'center' }}>
+              <Typography color="text.secondary">No income in this period</Typography>
+            </Box>
+          )}
+        </Paper>
+
+        {/* Spending Breakdown */}
+        <Paper sx={{ p: 3, flex: 1 }}>
+          <Typography variant="h6" gutterBottom>Spending Breakdown</Typography>
+          
+          {spendingData.length > 0 ? (
+            <Box sx={{ height: 400, width: '100%' }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={spendingData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }: { name?: string | number; percent?: number }) => `${name} ${(percent ? percent * 100 : 0).toFixed(0)}%`}
+                    outerRadius={120}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {spendingData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={SPENDING_COLORS[entry.name as keyof typeof SPENDING_COLORS]} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value: number | undefined) => [`${value} ZL`, undefined]} />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            </Box>
+          ) : (
+            <Box sx={{ py: 4, textAlign: 'center' }}>
+              <Typography color="text.secondary">No expenses in this period</Typography>
+            </Box>
+          )}
+        </Paper>
+      </Box>
     </Box>
   );
 };
