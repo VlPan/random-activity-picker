@@ -15,6 +15,7 @@ interface TodoContextType {
   completeTask: (id: string) => void;
   clearTodos: () => void;
   resetTodoTime: (id: string) => void;
+  reorderTodos: (newOrder: string[]) => void;
   getFormattedTime: (timeInSeconds: number) => string;
   activeTaskTime: number; // Current accumulated time for active task (including current session)
 }
@@ -267,6 +268,30 @@ export const TodoProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const reorderTodos = (newOrder: string[]) => {
+    setTodoItems(prev => {
+      const itemMap = new Map(prev.map(item => [item.id, item]));
+      const reordered: TodoItem[] = [];
+      
+      // Add items in the new order
+      for (const id of newOrder) {
+        const item = itemMap.get(id);
+        if (item) {
+          reordered.push(item);
+        }
+      }
+      
+      // Add any items that weren't in newOrder (shouldn't happen, but safety)
+      for (const item of prev) {
+        if (!newOrder.includes(item.id)) {
+          reordered.push(item);
+        }
+      }
+      
+      return reordered;
+    });
+  };
+
   const value = {
     todoItems,
     activeTaskId,
@@ -280,6 +305,7 @@ export const TodoProvider = ({ children }: { children: ReactNode }) => {
     completeTask,
     clearTodos,
     resetTodoTime,
+    reorderTodos,
     getFormattedTime,
     activeTaskTime
   };
