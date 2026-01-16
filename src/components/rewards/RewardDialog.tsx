@@ -20,7 +20,7 @@ interface RewardDialogProps {
 
 const RewardDialog = ({ open, onClose, onSave, reward }: RewardDialogProps) => {
   const [value, setValue] = useState<number | string>('');
-  const [currency, setCurrency] = useState('zl');
+  const [currency, setCurrency] = useState('P');
 
   useEffect(() => {
     if (reward) {
@@ -28,7 +28,7 @@ const RewardDialog = ({ open, onClose, onSave, reward }: RewardDialogProps) => {
       setCurrency(reward.currency);
     } else {
       setValue('');
-      setCurrency('zl');
+      setCurrency('P');
     }
   }, [reward, open]);
 

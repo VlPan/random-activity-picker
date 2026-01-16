@@ -13,7 +13,7 @@ interface TaskRewardDialogProps {
 }
 
 export const TaskRewardDialog = ({ open, onClose, onTakeRewards, onContinueTask, timeSpent }: TaskRewardDialogProps) => {
-  const { updateBalance, rewardSettings } = useUserContext();
+  const { updatePoints, rewardSettings } = useUserContext();
   const { getFormattedTime } = useTodoContext();
   const { step, rewards, startGeneration, reset } = useRewardGeneration();
   const [numRewards, setNumRewards] = useState<number>(1);
@@ -72,7 +72,7 @@ export const TaskRewardDialog = ({ open, onClose, onTakeRewards, onContinueTask,
 
   const handleTakeRewards = () => {
     const total = rewards.reduce((a, b) => a + b, 0);
-    updateBalance(total);
+    updatePoints(total);
     onTakeRewards();
   };
 
@@ -129,7 +129,7 @@ export const TaskRewardDialog = ({ open, onClose, onTakeRewards, onContinueTask,
           }}>
             {rewards.map((r, i) => (
               <Typography key={i} sx={{ ...getRewardStyle(r), animation: 'fadeIn 0.5s' }}>
-                {r}zl
+                {r}P
               </Typography>
             ))}
           </Box>
@@ -165,7 +165,7 @@ export const TaskRewardDialog = ({ open, onClose, onTakeRewards, onContinueTask,
         )}
         {step === 'finished' && (
           <Button onClick={handleTakeRewards} variant="contained" color="success" size="large">
-            Take My Rewards ({rewards.reduce((a, b) => a + b, 0)}zl)
+            Take My Rewards ({rewards.reduce((a, b) => a + b, 0)}P)
           </Button>
         )}
       </DialogActions>

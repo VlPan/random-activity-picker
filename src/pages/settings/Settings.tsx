@@ -45,6 +45,28 @@ const Settings = () => {
         </Box>
       </Paper>
 
+      <Paper sx={{ p: 4, mb: 3 }}>
+        <Typography variant="h6" gutterBottom>
+          Currency Conversion
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>
+          Set the exchange rate between Points and ZL.
+        </Typography>
+        <Stack direction="row" spacing={2} alignItems="center">
+            <Typography>1 ZL = </Typography>
+            <Box sx={{ width: 100 }}>
+              <TextField
+                type="number"
+                size="small"
+                value={rewardSettings.conversionRate}
+                onChange={handleChange('conversionRate')}
+                label="Points"
+              />
+            </Box>
+            <Typography>Points</Typography>
+        </Stack>
+      </Paper>
+
       <Paper sx={{ p: 4 }}>
         <Typography variant="h6" gutterBottom>
           Reward Formulas

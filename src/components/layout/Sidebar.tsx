@@ -82,7 +82,7 @@ const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' 
 
 const Sidebar = () => {
   const { isSidebarOpen: open, toggleSidebar: handleDrawerToggle } = useLayoutContext();
-  const { balance, luckyNumber } = useUserContext();
+  const { points, luckyNumber } = useUserContext();
   const { activeTaskId, activeTaskTime, isPaused, pauseTimer, resumeTimer, getFormattedTime } = useTodoContext();
   const navigate = useNavigate();
   const location = useLocation();
@@ -176,7 +176,7 @@ const Sidebar = () => {
             </Box>
         </Tooltip>
         <Divider />
-        <Tooltip title={`Balance: ${balance}zl`} placement="right" disableHoverListener={open}>
+        <Tooltip title={`Points: ${points}P`} placement="right" disableHoverListener={open}>
             <Box
                 sx={{
                 minHeight: 48,
@@ -188,7 +188,7 @@ const Sidebar = () => {
                 fontWeight: 'bold'
                 }}
             >
-                {balance}
+                {points}P
             </Box>
         </Tooltip>
       </Box>
