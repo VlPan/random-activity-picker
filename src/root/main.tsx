@@ -11,6 +11,7 @@ import Randomizer from '../pages/randomizer/Randomizer.tsx';
 import Inventory from '../pages/inventory/Inventory.tsx';
 import Settings from '../pages/settings/Settings.tsx';
 import Bills from '../pages/bills/Bills.tsx';
+import Shop from '../pages/shop/Shop.tsx';
 import { ThemeProvider } from '@mui/material/styles';
 import {theme} from './theme.ts';
 
@@ -34,6 +35,10 @@ const router = createHashRouter([
       {
         path: "bills",
         element: <Bills />,
+      },
+      {
+        path: "shop",
+        element: <Shop />,
       },
       {
         path: "settings",

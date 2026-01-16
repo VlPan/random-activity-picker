@@ -6,6 +6,7 @@ import { LayoutProvider } from "../contexts/LayoutContext";
 import { UserProvider } from "../contexts/UserContext";
 import { TodoProvider } from "../contexts/TodoContext";
 import { BillProvider } from "../contexts/BillContext";
+import { ShopProvider } from "../contexts/ShopContext";
 import { Box, CssBaseline } from "@mui/material";
 import Sidebar from "../components/layout/Sidebar";
 
@@ -16,15 +17,17 @@ function App() {
         <LayoutProvider>
           <UserProvider>
             <BillProvider>
-              <TodoProvider>
-                <Box sx={{ display: "flex" }}>
-                  <CssBaseline />
-                  <Sidebar />
-                  <Box component="main" sx={{ flexGrow: 1, p: 3, width: '100%' }}>
-                    <Outlet />
+              <ShopProvider>
+                <TodoProvider>
+                  <Box sx={{ display: "flex" }}>
+                    <CssBaseline />
+                    <Sidebar />
+                    <Box component="main" sx={{ flexGrow: 1, p: 3, width: '100%' }}>
+                      <Outlet />
+                    </Box>
                   </Box>
-                </Box>
-              </TodoProvider>
+                </TodoProvider>
+              </ShopProvider>
             </BillProvider>
           </UserProvider>
         </LayoutProvider>

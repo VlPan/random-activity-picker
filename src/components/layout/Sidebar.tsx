@@ -18,6 +18,7 @@ import {
   ChevronLeft as ChevronLeftIcon,
   Settings as SettingsIcon,
   Receipt as ReceiptIcon,
+  ShoppingCart as ShoppingCartIcon,
 } from '@mui/icons-material';
 import { useLayoutContext } from '../../contexts/LayoutContext';
 import { useUserContext } from '../../contexts/UserContext';
@@ -97,6 +98,7 @@ const Sidebar = () => {
     { text: 'Randomizer', icon: <ShuffleIcon />, path: '/randomizer' },
     { text: 'Inventory', icon: <InventoryIcon />, path: '/inventory' },
     { text: 'Bills', icon: <ReceiptIcon />, path: '/bills' },
+    { text: 'Shop', icon: <ShoppingCartIcon />, path: '/shop' },
     { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
   ];
 
