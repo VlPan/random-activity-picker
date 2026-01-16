@@ -18,6 +18,7 @@ export interface HistoryItem {
   type: 'points' | 'balance';
   reason: string;
   count?: number;
+  duration?: number; // In seconds
 }
 
 interface UserContextType {
@@ -27,7 +28,7 @@ interface UserContextType {
   rewardSettings: RewardSettings;
   history: HistoryItem[];
   updateBalance: (amount: number, reason?: string) => void;
-  updatePoints: (amount: number, reason?: string, count?: number) => void;
+  updatePoints: (amount: number, reason?: string, count?: number, duration?: number) => void;
   exchangePoints: (pointsToExchange: number) => void;
   setLuckyNumber: (num: number) => void;
   updateRewardSettings: (settings: RewardSettings) => void;
@@ -85,14 +86,15 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
-  const addHistoryItem = (amount: number, type: 'points' | 'balance', reason: string, count?: number) => {
+  const addHistoryItem = (amount: number, type: 'points' | 'balance', reason: string, count?: number, duration?: number) => {
     const newItem: HistoryItem = {
         id: crypto.randomUUID(),
         date: new Date().toISOString(),
         amount,
         type,
         reason,
-        count
+        count,
+        duration
     };
     
     setHistory(prev => {
@@ -111,13 +113,13 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     addHistoryItem(amount, 'balance', reason);
   };
 
-  const updatePoints = (amount: number, reason: string = 'Manual Adjustment', count?: number) => {
+  const updatePoints = (amount: number, reason: string = 'Manual Adjustment', count?: number, duration?: number) => {
     setPoints((prev) => {
       const newPoints = prev + amount;
       localStorage.setItem('userPoints', newPoints.toString());
       return newPoints;
     });
-    addHistoryItem(amount, 'points', reason, count);
+    addHistoryItem(amount, 'points', reason, count, duration);
   };
 
   const exchangePoints = (pointsToExchange: number) => {

@@ -30,6 +30,76 @@ const Statistics = () => {
     return startDate;
   };
 
+  const focusTimeData = useMemo(() => {
+    const now = new Date();
+    now.setHours(23, 59, 59, 999);
+    const startDate = getStartDate(timeRange, now);
+
+    const relevantItems = history.filter(item => {
+      if (!item.reason.startsWith('Task Reward')) return false;
+      const itemDate = new Date(item.date);
+      return itemDate >= startDate && itemDate <= now;
+    });
+
+    const dailyStats = new Map<string, { duration: number }>();
+
+    const getLocalDateKey = (date: Date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+    
+    // Initialize days
+    const currentDate = new Date(startDate);
+    while (currentDate <= now) {
+      const dateKey = getLocalDateKey(currentDate);
+      dailyStats.set(dateKey, { duration: 0 });
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    relevantItems.forEach(item => {
+      if (!item.duration) return;
+      const itemDate = new Date(item.date);
+      const dateKey = getLocalDateKey(itemDate);
+      if (dailyStats.has(dateKey)) {
+        const stats = dailyStats.get(dateKey)!;
+        stats.duration += item.duration;
+      }
+    });
+
+    return Array.from(dailyStats.entries()).map(([date, stats]) => ({
+      date,
+      displayDate: new Date(date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+      minutes: Math.round(stats.duration / 60)
+    }));
+  }, [history, timeRange]);
+
+  const focusStats = useMemo(() => {
+    const totalMinutes = focusTimeData.reduce((acc, curr) => acc + curr.minutes, 0);
+    
+    // Calculate days in range
+    const now = new Date();
+    now.setHours(23, 59, 59, 999);
+    const startDate = getStartDate(timeRange, now);
+    const diffTime = Math.abs(now.getTime() - startDate.getTime());
+    const daysInRange = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+    
+    const avgMinutes = daysInRange > 0 ? (totalMinutes / daysInRange) : 0;
+
+    const formatTime = (totalMins: number) => {
+      const hours = Math.floor(totalMins / 60);
+      const mins = Math.round(totalMins % 60);
+      if (hours > 0) return `${hours}h ${mins}m`;
+      return `${mins}m`;
+    };
+
+    return {
+      totalTime: formatTime(totalMinutes),
+      avgTime: formatTime(avgMinutes)
+    };
+  }, [focusTimeData, timeRange]);
+
   const taskCompletionData = useMemo(() => {
     const now = new Date();
     now.setHours(23, 59, 59, 999);
@@ -408,9 +478,54 @@ const Statistics = () => {
         </Box>
       </Paper>
 
-      {/* Productivity Overview */}
+      {/* Focus Time Overview */}
       <Paper sx={{ p: 3, mb: 3 }}>
-        <Typography variant="h6" gutterBottom>Productivity Overview</Typography>
+        <Typography variant="h6" gutterBottom>Focus Time Overview</Typography>
+        
+        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2, mb: 3 }}>
+            <Card elevation={2} sx={{ flex: 1, bgcolor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : '#f5f5f5' }}>
+                <CardContent>
+                    <Typography color="text.secondary" gutterBottom>Total Focus Time</Typography>
+                    <Typography variant="h4">{focusStats.totalTime}</Typography>
+                </CardContent>
+            </Card>
+            <Card elevation={2} sx={{ flex: 1, bgcolor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : '#f5f5f5' }}>
+                <CardContent>
+                    <Typography color="text.secondary" gutterBottom>Avg Focus Time / Day</Typography>
+                    <Typography variant="h4">{focusStats.avgTime}</Typography>
+                </CardContent>
+            </Card>
+        </Box>
+
+        <Box sx={{ height: 400, width: '100%' }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={focusTimeData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis 
+                dataKey="displayDate" 
+                tick={{ fontSize: 12 }}
+                interval={timeRange === '300days' || timeRange === '100days' ? 'preserveStartEnd' : 0}
+              />
+              <YAxis allowDecimals={false} />
+              <Tooltip 
+                contentStyle={{ backgroundColor: theme.palette.background.paper, color: theme.palette.text.primary }}
+                itemStyle={{ color: '#7b1fa2' }}
+                formatter={(value: number | undefined) => [`${value} min`, 'Focus Time']}
+                labelFormatter={(label) => `Date: ${label}`}
+              />
+              <Bar dataKey="minutes" fill="#7b1fa2">
+                {focusTimeData.map((_, index) => (
+                    <Cell key={`cell-${index}`} fill="#7b1fa2" />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </Box>
+      </Paper>
+
+      {/* Task Completion Overview */}
+      <Paper sx={{ p: 3, mb: 3 }}>
+        <Typography variant="h6" gutterBottom>Task Completion Overview</Typography>
         
         <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2, mb: 3 }}>
             <Card elevation={2} sx={{ flex: 1, bgcolor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : '#f5f5f5' }}>

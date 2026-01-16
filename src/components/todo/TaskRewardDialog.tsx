@@ -74,7 +74,7 @@ export const TaskRewardDialog = ({ open, onClose, onTakeRewards, onContinueTask,
   const handleTakeRewards = () => {
     const total = rewards.reduce((a, b) => a + b, 0);
     const reason = taskName ? `Task Reward: ${taskName}` : 'Task Reward';
-    updatePoints(total, reason, rewards.length);
+    updatePoints(total, reason, rewards.length, timeSpent);
     onTakeRewards();
   };
 
