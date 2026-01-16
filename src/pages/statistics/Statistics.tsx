@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Box, Typography, Paper, ToggleButton, ToggleButtonGroup, useTheme, Card, CardContent } from '@mui/material';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend, AreaChart, Area } from 'recharts';
 import { useUserContext } from '../../contexts/UserContext';
 
 type TimeRange = 'week' | '7days' | '30days' | '100days' | '300days';
@@ -170,6 +170,75 @@ const Statistics = () => {
       avgTasks: avgTasks.toFixed(1)
     };
   }, [taskCompletionData, timeRange]);
+
+  const pointsGrowthData = useMemo(() => {
+    const now = new Date();
+    now.setHours(23, 59, 59, 999);
+    const startDate = getStartDate(timeRange, now);
+
+    // 1. Calculate initial total points before startDate
+    const initialTotal = history
+      .filter(item => {
+        if (item.type !== 'points') return false;
+        if (item.amount <= 0) return false;
+        const itemDate = new Date(item.date);
+        return itemDate < startDate;
+      })
+      .reduce((sum, item) => sum + item.amount, 0);
+
+    // 2. Get relevant items within range
+    const relevantItems = history
+      .filter(item => {
+        if (item.type !== 'points') return false;
+        if (item.amount <= 0) return false;
+        const itemDate = new Date(item.date);
+        return itemDate >= startDate && itemDate <= now;
+      });
+
+    // 3. Create daily map
+    const dailyPointsChange = new Map<string, number>();
+
+    const getLocalDateKey = (date: Date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
+    // Initialize days
+    const currentDate = new Date(startDate);
+    while (currentDate <= now) {
+      const dateKey = getLocalDateKey(currentDate);
+      dailyPointsChange.set(dateKey, 0);
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    // Fill daily changes
+    relevantItems.forEach(item => {
+        const itemDate = new Date(item.date);
+        const dateKey = getLocalDateKey(itemDate);
+        if (dailyPointsChange.has(dateKey)) {
+            const currentVal = dailyPointsChange.get(dateKey)!;
+            dailyPointsChange.set(dateKey, currentVal + item.amount);
+        }
+    });
+
+    // 4. Build cumulative data
+    let runningTotal = initialTotal;
+    const result: { date: string; displayDate: string; totalPoints: number }[] = [];
+    
+    // Iterate through map keys in order
+    for (const [date, change] of dailyPointsChange) {
+        runningTotal += change;
+        result.push({
+            date,
+            displayDate: new Date(date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+            totalPoints: runningTotal
+        });
+    }
+
+    return result;
+  }, [history, timeRange]);
 
   const chartData = useMemo(() => {
     const now = new Date();
@@ -570,6 +639,43 @@ const Statistics = () => {
                 ))}
               </Bar>
             </BarChart>
+          </ResponsiveContainer>
+        </Box>
+      </Paper>
+
+      {/* Points Growth Section */}
+      <Paper sx={{ p: 3, mb: 3 }}>
+        <Typography variant="h6" gutterBottom>Total Points History (XP Curve)</Typography>
+        <Box sx={{ height: 400, width: '100%' }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={pointsGrowthData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+              <defs>
+                <linearGradient id="colorPoints" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#9c27b0" stopOpacity={0.8}/>
+                  <stop offset="95%" stopColor="#9c27b0" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis 
+                dataKey="displayDate" 
+                tick={{ fontSize: 12 }}
+                interval={timeRange === '300days' || timeRange === '100days' ? 'preserveStartEnd' : 0}
+              />
+              <YAxis />
+              <Tooltip 
+                contentStyle={{ backgroundColor: theme.palette.background.paper, color: theme.palette.text.primary }}
+                itemStyle={{ color: '#9c27b0' }}
+                formatter={(value: number | undefined) => [value, 'Total Points']}
+                labelFormatter={(label) => `Date: ${label}`}
+              />
+              <Area 
+                type="monotone" 
+                dataKey="totalPoints" 
+                stroke="#9c27b0" 
+                fillOpacity={1} 
+                fill="url(#colorPoints)" 
+              />
+            </AreaChart>
           </ResponsiveContainer>
         </Box>
       </Paper>
