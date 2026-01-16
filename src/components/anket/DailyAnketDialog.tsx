@@ -12,6 +12,7 @@ import {
 } from '@mui/material';
 import { ConfirmationDialog } from '../common/ConfirmationDialog';
 import { useUserContext } from '../../contexts/UserContext';
+import { formatDate } from '../../utils/dateUtils';
 
 interface DailyAnketDialogProps {
   open: boolean;
@@ -45,15 +46,6 @@ export const DailyAnketDialog: React.FC<DailyAnketDialogProps> = ({
   
   // Remaining days calculation compatible with both approaches
   const remainingDays = missingDays.length - currentDayIndex;
-
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString(undefined, {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-  };
 
   const calculateDiscountedCost = (cost: number) => {
     const discount = rewardSettings.basicNecessityDiscount || 0;

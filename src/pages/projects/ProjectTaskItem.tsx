@@ -1,4 +1,7 @@
-import { Box, Checkbox, Typography, Chip } from '@mui/material';
+import { Box, Checkbox, Typography, Chip, IconButton } from '@mui/material';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import type { ProjectTask } from '../../models/project';
 
 interface ProjectTaskItemProps {
@@ -7,8 +10,28 @@ interface ProjectTaskItemProps {
 }
 
 const ProjectTaskItem = ({ task, onComplete }: ProjectTaskItemProps) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: task.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : (task.isCompleted ? 0.6 : 1),
+    position: 'relative' as 'relative',
+    zIndex: isDragging ? 1 : 0,
+    backgroundColor: isDragging ? '#fafafa' : 'transparent',
+  };
+
   return (
     <Box 
+      ref={setNodeRef}
+      style={style}
       sx={{ 
         display: 'flex', 
         alignItems: 'center', 
@@ -16,14 +39,21 @@ const ProjectTaskItem = ({ task, onComplete }: ProjectTaskItemProps) => {
         p: 1,
         borderBottom: '1px solid',
         borderColor: 'divider',
-        opacity: task.isCompleted ? 0.6 : 1,
-        transition: 'opacity 0.2s',
+        // opacity logic moved to style for drag support
         '&:last-child': {
             borderBottom: 'none'
         }
       }}
     >
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <IconButton
+            size="small"
+            {...attributes}
+            {...listeners}
+            sx={{ cursor: 'grab', touchAction: 'none' }}
+        >
+            <DragIndicatorIcon fontSize="small" color="disabled" />
+        </IconButton>
         <Checkbox 
           checked={task.isCompleted} 
           disabled={task.isCompleted}

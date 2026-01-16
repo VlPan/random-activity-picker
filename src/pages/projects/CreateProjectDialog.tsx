@@ -62,7 +62,7 @@ const CreateProjectDialog = ({ open, onClose, onSave, initialData }: CreateProje
     }, [open, initialData]);
 
     const handleAddTask = () => {
-        setTasks([...tasks, { id: uuidv4(), name: '', rewardMin: '10', rewardMax: '50' }]);
+        setTasks([...tasks, { id: uuidv4(), name: '', rewardMin: '100', rewardMax: '300' }]);
     };
 
     const handleRemoveTask = (id: string) => {
@@ -134,7 +134,7 @@ const CreateProjectDialog = ({ open, onClose, onSave, initialData }: CreateProje
                     {tasks.map((task) => (
                         <Box key={task.id} sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
                             <Grid container spacing={1}>
-                                <Grid item xs={6}>
+                                <Grid size={6}>
                                     <TextField
                                         label="Task Name"
                                         size="small"
@@ -143,7 +143,7 @@ const CreateProjectDialog = ({ open, onClose, onSave, initialData }: CreateProje
                                         onChange={(e) => handleTaskChange(task.id, 'name', e.target.value)}
                                     />
                                 </Grid>
-                                <Grid item xs={2}>
+                                <Grid size={2}>
                                     <TextField
                                         label="Min P"
                                         type="number"
@@ -153,7 +153,7 @@ const CreateProjectDialog = ({ open, onClose, onSave, initialData }: CreateProje
                                         onChange={(e) => handleTaskChange(task.id, 'rewardMin', e.target.value)}
                                     />
                                 </Grid>
-                                <Grid item xs={2}>
+                                <Grid size={2}>
                                     <TextField
                                         label="Max P"
                                         type="number"
@@ -163,7 +163,7 @@ const CreateProjectDialog = ({ open, onClose, onSave, initialData }: CreateProje
                                         onChange={(e) => handleTaskChange(task.id, 'rewardMax', e.target.value)}
                                     />
                                 </Grid>
-                                <Grid item xs={2} sx={{ display: 'flex', justifyContent: 'center' }}>
+                                <Grid size={2} sx={{ display: 'flex', justifyContent: 'center' }}>
                                     <IconButton color="error" onClick={() => handleRemoveTask(task.id)}>
                                         <DeleteIcon />
                                     </IconButton>

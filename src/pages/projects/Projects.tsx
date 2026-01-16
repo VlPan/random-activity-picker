@@ -127,6 +127,13 @@ const Projects = () => {
       setRewardDialogState(prev => ({ ...prev, open: false }));
   };
 
+  const handleTaskReorder = (projectId: string, tasks: ProjectTask[]) => {
+    const project = projects.find(p => p.id === projectId);
+    if (project) {
+        updateProject({ ...project, tasks });
+    }
+  };
+
   return (
     <Box sx={{ maxWidth: 800, mx: 'auto' }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
@@ -156,6 +163,7 @@ const Projects = () => {
                     onEdit={handleEditClick}
                     onDelete={handleDeleteClick}
                     onTaskComplete={(taskId) => handleTaskCompleteClick(project.id, taskId)}
+                    onTaskReorder={handleTaskReorder}
                 />
             ))}
         </Box>

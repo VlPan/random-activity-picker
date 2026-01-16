@@ -19,6 +19,7 @@ import DeleteSweepIcon from '@mui/icons-material/DeleteSweep';
 import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
 import StarIcon from '@mui/icons-material/Star';
 import { useMemo } from 'react';
+import { formatDateTime } from '../../utils/dateUtils';
 
 const History = () => {
   const { history, clearHistory } = useUserContext();
@@ -85,7 +86,7 @@ const History = () => {
                 )}
               </Box>
             }
-            secondary={new Date(item.date).toLocaleString()} 
+            secondary={formatDateTime(item.date)} 
           />
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
              <Typography 

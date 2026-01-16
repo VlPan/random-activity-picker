@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { Box, Typography, Paper, ToggleButton, ToggleButtonGroup, useTheme, Card, CardContent } from '@mui/material';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend, AreaChart, Area } from 'recharts';
 import { useUserContext } from '../../contexts/UserContext';
+import { formatDate } from '../../utils/dateUtils';
 
 type TimeRange = 'week' | '7days' | '30days' | '100days' | '300days';
 
@@ -70,7 +71,7 @@ const Statistics = () => {
 
     return Array.from(dailyStats.entries()).map(([date, stats]) => ({
       date,
-      displayDate: new Date(date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+      displayDate: formatDate(date),
       minutes: Math.round(stats.duration / 60)
     }));
   }, [history, timeRange]);
@@ -140,7 +141,7 @@ const Statistics = () => {
 
     return Array.from(dailyStats.entries()).map(([date, stats]) => ({
       date,
-      displayDate: new Date(date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+      displayDate: formatDate(date),
       count: stats.count,
       points: stats.points
     }));
@@ -232,7 +233,7 @@ const Statistics = () => {
         runningTotal += change;
         result.push({
             date,
-            displayDate: new Date(date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+            displayDate: formatDate(date),
             totalPoints: runningTotal
         });
     }
@@ -294,7 +295,7 @@ const Statistics = () => {
     // Convert to array
     return Array.from(dailyStats.entries()).map(([date, stats]) => ({
       date,
-      displayDate: new Date(date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+      displayDate: formatDate(date),
       count: stats.count,
       points: stats.points
     }));
@@ -366,7 +367,7 @@ const Statistics = () => {
 
     return Array.from(dailyStats.entries()).map(([date, stats]) => ({
       date,
-      displayDate: new Date(date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+      displayDate: formatDate(date),
       income: Number(stats.income.toFixed(2)),
       expense: Number(stats.expense.toFixed(2))
     }));

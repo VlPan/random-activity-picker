@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { 
     Card, 
     Typography, 
@@ -12,17 +13,53 @@ import {
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
-import type { Project } from '../../models/project';
+import { 
+    DndContext, 
+    closestCenter, 
+    KeyboardSensor, 
+    PointerSensor, 
+    useSensor, 
+    useSensors, 
+    type DragEndEvent 
+} from '@dnd-kit/core';
+import { 
+    SortableContext, 
+    sortableKeyboardCoordinates, 
+    verticalListSortingStrategy, 
+    arrayMove 
+} from '@dnd-kit/sortable';
+import type { Project, ProjectTask } from '../../models/project';
 import ProjectTaskItem from './ProjectTaskItem';
+import { formatDate } from '../../utils/dateUtils';
 
 interface ProjectCardProps {
     project: Project;
     onDelete: (id: string) => void;
     onEdit: (project: Project) => void;
     onTaskComplete: (taskId: string) => void;
+    onTaskReorder: (projectId: string, tasks: ProjectTask[]) => void;
 }
 
-const ProjectCard = ({ project, onDelete, onEdit, onTaskComplete }: ProjectCardProps) => {
+const ProjectCard = ({ project, onDelete, onEdit, onTaskComplete, onTaskReorder }: ProjectCardProps) => {
+    const sensors = useSensors(
+        useSensor(PointerSensor),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        })
+    );
+
+    const handleDragEnd = (event: DragEndEvent) => {
+        const { active, over } = event;
+        
+        if (over && active.id !== over.id) {
+            const oldIndex = project.tasks.findIndex((t) => t.id === active.id);
+            const newIndex = project.tasks.findIndex((t) => t.id === over.id);
+            
+            const newTasks = arrayMove(project.tasks, oldIndex, newIndex);
+            onTaskReorder(project.id, newTasks);
+        }
+    };
+
     // Calculate Timeline Progress
     const calculateTimeProgress = () => {
         const start = new Date(project.startDate).getTime();
@@ -55,6 +92,16 @@ const ProjectCard = ({ project, onDelete, onEdit, onTaskComplete }: ProjectCardP
             ? 'Due today'
             : `${Math.abs(daysLeft)} days overdue`;
 
+    const [expanded, setExpanded] = useState(() => {
+        const saved = localStorage.getItem(`project_expanded_${project.id}`);
+        return saved === 'true';
+    });
+
+    const handleAccordionChange = (_event: React.SyntheticEvent, isExpanded: boolean) => {
+        setExpanded(isExpanded);
+        localStorage.setItem(`project_expanded_${project.id}`, String(isExpanded));
+    };
+
     return (
         <Card sx={{ mb: 2, position: 'relative', overflow: 'visible' }}>
             <Box sx={{ position: 'relative', display: 'flex', flexDirection: 'column' }}>
@@ -84,7 +131,7 @@ const ProjectCard = ({ project, onDelete, onEdit, onTaskComplete }: ProjectCardP
                 />
             </Box>
 
-            <Accordion defaultExpanded={false} disableGutters elevation={0} sx={{ '&:before': { display: 'none' } }}>
+            <Accordion expanded={expanded} onChange={handleAccordionChange} disableGutters elevation={0} sx={{ '&:before': { display: 'none' } }}>
                 <AccordionSummary
                     expandIcon={<ExpandMoreIcon />}
                     sx={{ 
@@ -102,7 +149,7 @@ const ProjectCard = ({ project, onDelete, onEdit, onTaskComplete }: ProjectCardP
                             {project.name}
                         </Typography>
                         <Typography variant="caption" color={isOverdue ? 'error.main' : 'text.secondary'}>
-                            {new Date(project.startDate).toLocaleDateString()} - {new Date(project.endDate).toLocaleDateString()}
+                            {formatDate(project.startDate)} - {formatDate(project.endDate)}
                             <Box component="span" sx={{ ml: 1, fontWeight: 'medium' }}>
                                 ({daysLeftText})
                             </Box>
@@ -138,13 +185,24 @@ const ProjectCard = ({ project, onDelete, onEdit, onTaskComplete }: ProjectCardP
                         {project.tasks.length === 0 && (
                             <Typography sx={{ p: 2 }} color="text.secondary">No tasks added yet.</Typography>
                         )}
-                        {project.tasks.map(task => (
-                            <ProjectTaskItem 
-                                key={task.id} 
-                                task={task} 
-                                onComplete={onTaskComplete} 
-                            />
-                        ))}
+                        <DndContext 
+                            sensors={sensors} 
+                            collisionDetection={closestCenter} 
+                            onDragEnd={handleDragEnd}
+                        >
+                            <SortableContext 
+                                items={project.tasks.map(t => t.id)} 
+                                strategy={verticalListSortingStrategy}
+                            >
+                                {project.tasks.map(task => (
+                                    <ProjectTaskItem 
+                                        key={task.id} 
+                                        task={task} 
+                                        onComplete={onTaskComplete} 
+                                    />
+                                ))}
+                            </SortableContext>
+                        </DndContext>
                     </Box>
                 </AccordionDetails>
             </Accordion>
