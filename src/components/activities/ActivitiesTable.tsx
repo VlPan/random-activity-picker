@@ -4,8 +4,11 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import EditIcon from '@mui/icons-material/Edit';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import DeleteIcon from '@mui/icons-material/Delete';
+import PlaylistAddIcon from '@mui/icons-material/PlaylistAdd';
 import { useActivityContext } from '../../contexts/ActivityContext';
+import { useTodoContext } from '../../contexts/TodoContext';
 import type { Activity } from '../../models/activity';
+import type { TodoItem } from '../../models/todo';
 import { DataTable } from '../common/DataTable';
 import { ConfirmationDialog } from '../common/ConfirmationDialog';
 import type { ColumnDef } from '../common/DataTable';
@@ -18,6 +21,7 @@ interface ActivitiesTableProps {
 
 export const ActivitiesTable = ({ activities, showPlaylistColumn = false, onEdit }: ActivitiesTableProps) => {
   const { deleteActivity, playlists } = useActivityContext();
+  const { addTodo } = useTodoContext();
   
   // State for the menu
   const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
@@ -69,6 +73,22 @@ export const ActivitiesTable = ({ activities, showPlaylistColumn = false, onEdit
     setSelectedActivity(null);
   };
 
+  const handlePickActivity = () => {
+    if (selectedActivity) {
+      const playlist = playlists.get(selectedActivity.playlistId);
+      const newItem: TodoItem = {
+        id: crypto.randomUUID(),
+        activityId: selectedActivity.id,
+        displayName: selectedActivity.displayName,
+        playlistName: playlist?.displayName || 'Unknown',
+        isCompleted: false,
+        timeSpent: 0
+      };
+      addTodo(newItem);
+    }
+    handleMenuClose();
+  };
+
   const columns: ColumnDef<Activity>[] = [
     {
       id: 'displayName',
@@ -115,6 +135,12 @@ export const ActivitiesTable = ({ activities, showPlaylistColumn = false, onEdit
         open={Boolean(menuAnchorEl)}
         onClose={handleMenuClose}
       >
+        <MenuItem onClick={handlePickActivity}>
+          <ListItemIcon>
+            <PlaylistAddIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Pick Activity</ListItemText>
+        </MenuItem>
         <MenuItem onClick={handleEdit}>
           <ListItemIcon>
             <EditIcon fontSize="small" />
