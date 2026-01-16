@@ -8,6 +8,7 @@ interface RewardSettings {
   maxPoints: number;
   progressiveInterval: number;
   conversionRate: number; // Points per 1 ZL
+  basicNecessityDiscount: number; // Percentage discount (0-100)
 }
 
 interface UserContextType {
@@ -28,7 +29,8 @@ const defaultRewardSettings: RewardSettings = {
   maxTimeBlock: 10,
   maxPoints: 1,
   progressiveInterval: 30,
-  conversionRate: 100
+  conversionRate: 100,
+  basicNecessityDiscount: 0
 };
 
 const UserContext = createContext<UserContextType | undefined>(undefined);

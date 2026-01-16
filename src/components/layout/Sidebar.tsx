@@ -17,6 +17,7 @@ import {
   Menu as MenuIcon,
   ChevronLeft as ChevronLeftIcon,
   Settings as SettingsIcon,
+  Receipt as ReceiptIcon,
 } from '@mui/icons-material';
 import { useLayoutContext } from '../../contexts/LayoutContext';
 import { useUserContext } from '../../contexts/UserContext';
@@ -95,6 +96,7 @@ const Sidebar = () => {
   const menuItems = [
     { text: 'Randomizer', icon: <ShuffleIcon />, path: '/randomizer' },
     { text: 'Inventory', icon: <InventoryIcon />, path: '/inventory' },
+    { text: 'Bills', icon: <ReceiptIcon />, path: '/bills' },
     { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
   ];
 

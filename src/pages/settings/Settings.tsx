@@ -67,6 +67,36 @@ const Settings = () => {
         </Stack>
       </Paper>
 
+      <Paper sx={{ p: 4, mb: 3 }}>
+        <Typography variant="h6" gutterBottom>
+          Discounts
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>
+          Set discounts for basic necessity bills.
+        </Typography>
+        <Stack direction="row" spacing={2} alignItems="center">
+            <Typography>Basic Necessity Discount: </Typography>
+            <Box sx={{ width: 100 }}>
+              <TextField
+                type="number"
+                size="small"
+                value={rewardSettings.basicNecessityDiscount}
+                onChange={(e) => {
+                   const val = Number(e.target.value);
+                   if (!isNaN(val) && val >= 0 && val <= 100) {
+                     updateRewardSettings({
+                       ...rewardSettings,
+                       basicNecessityDiscount: val
+                     });
+                   }
+                }}
+                label="%"
+                inputProps={{ min: 0, max: 100 }}
+              />
+            </Box>
+        </Stack>
+      </Paper>
+
       <Paper sx={{ p: 4 }}>
         <Typography variant="h6" gutterBottom>
           Reward Formulas
