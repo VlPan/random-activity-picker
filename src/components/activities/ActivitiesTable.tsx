@@ -23,9 +23,38 @@ export const ActivitiesTable = ({ activities, showPlaylistColumn = false, onEdit
   const { deleteActivity, playlists } = useActivityContext();
   const { addTodo } = useTodoContext();
   
+  // Sorting state
+  const [orderBy, setOrderBy] = useState<string>('priority');
+  const [order, setOrder] = useState<'asc' | 'desc'>('desc');
+
   // State for the menu
   const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
+
+  const handleRequestSort = (property: string) => {
+    const isAsc = orderBy === property && order === 'asc';
+    setOrder(isAsc ? 'desc' : 'asc');
+    setOrderBy(property);
+  };
+
+  const sortedActivities = [...activities].sort((a, b) => {
+    if (orderBy === 'priority') {
+      return order === 'asc' ? a.priority - b.priority : b.priority - a.priority;
+    }
+    if (orderBy === 'displayName') {
+      return order === 'asc' 
+        ? a.displayName.localeCompare(b.displayName) 
+        : b.displayName.localeCompare(a.displayName);
+    }
+    if (orderBy === 'playlist') {
+      const pA = playlists.get(a.playlistId)?.displayName || '';
+      const pB = playlists.get(b.playlistId)?.displayName || '';
+      return order === 'asc' 
+        ? pA.localeCompare(pB) 
+        : pB.localeCompare(pA);
+    }
+    return 0;
+  });
   
   // State for delete confirmation dialog
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -94,18 +123,21 @@ export const ActivitiesTable = ({ activities, showPlaylistColumn = false, onEdit
       id: 'displayName',
       label: 'Name',
       align: 'left',
+      sortable: true,
     },
     ...(showPlaylistColumn ? [{
       id: 'playlist',
       label: 'Playlist',
       align: 'left' as const,
       render: (activity: Activity) => playlists.get(activity.playlistId)?.displayName || 'Unknown',
+      sortable: true,
     }] : []),
     {
       id: 'priority',
       label: 'Priority',
-      align: 'left', // Or center? User said "name and prirority"
+      align: 'left',
       render: (activity) => activity.priority.toString(),
+      sortable: true,
     },
     {
       id: 'actions',
@@ -126,7 +158,13 @@ export const ActivitiesTable = ({ activities, showPlaylistColumn = false, onEdit
 
   return (
     <>
-      <DataTable data={activities} columns={columns} />
+      <DataTable 
+        data={sortedActivities} 
+        columns={columns} 
+        orderBy={orderBy}
+        order={order}
+        onRequestSort={handleRequestSort}
+      />
 
       <Menu
         id="long-menu"

@@ -6,6 +6,7 @@ import {
   TableHead,
   TableRow,
   Paper,
+  TableSortLabel,
 } from '@mui/material';
 import type { ReactNode } from 'react';
 
@@ -15,6 +16,7 @@ export interface ColumnDef<T> {
   align?: 'left' | 'right' | 'center';
   minWidth?: number;
   render?: (item: T) => ReactNode;
+  sortable?: boolean;
 }
 
 interface DataTableProps<T> {
@@ -23,6 +25,9 @@ interface DataTableProps<T> {
   minWidth?: number | string;
   compact?: boolean;
   elevation?: number;
+  orderBy?: string;
+  order?: 'asc' | 'desc';
+  onRequestSort?: (property: string) => void;
 }
 
 export const DataTable = <T,>({ 
@@ -30,8 +35,17 @@ export const DataTable = <T,>({
   columns, 
   minWidth = 650, 
   compact = false,
-  elevation
+  elevation,
+  orderBy,
+  order,
+  onRequestSort,
 }: DataTableProps<T>) => {
+  const createSortHandler = (property: string) => () => {
+    if (onRequestSort) {
+      onRequestSort(property);
+    }
+  };
+
   return (
     <TableContainer component={Paper} elevation={elevation}>
       <Table 
@@ -47,8 +61,19 @@ export const DataTable = <T,>({
                 align={column.align || 'left'}
                 style={{ minWidth: column.minWidth }}
                 size={compact ? 'small' : 'medium'}
+                sortDirection={orderBy === column.id ? order : false}
               >
-                {column.label}
+                {column.sortable ? (
+                  <TableSortLabel
+                    active={orderBy === column.id}
+                    direction={orderBy === column.id ? order : 'asc'}
+                    onClick={createSortHandler(column.id)}
+                  >
+                    {column.label}
+                  </TableSortLabel>
+                ) : (
+                  column.label
+                )}
               </TableCell>
             ))}
           </TableRow>
