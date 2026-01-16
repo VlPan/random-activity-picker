@@ -19,6 +19,8 @@ interface DailyAnketDialogProps {
   currentDayIndex: number;
   onSubmit: (basicSpending: number, nonEssentialSpending: number) => void;
   onSkipAll: () => void;
+  dayNumber?: number;
+  totalDaysCount?: number;
 }
 
 export const DailyAnketDialog: React.FC<DailyAnketDialogProps> = ({
@@ -27,6 +29,8 @@ export const DailyAnketDialog: React.FC<DailyAnketDialogProps> = ({
   currentDayIndex,
   onSubmit,
   onSkipAll,
+  dayNumber,
+  totalDaysCount,
 }) => {
   const { rewardSettings } = useUserContext();
   const [basicSpending, setBasicSpending] = useState<string>('');
@@ -34,8 +38,13 @@ export const DailyAnketDialog: React.FC<DailyAnketDialogProps> = ({
   const [skipAllConfirmOpen, setSkipAllConfirmOpen] = useState(false);
 
   const currentDay = missingDays[currentDayIndex];
-  const totalDays = missingDays.length;
-  const remainingDays = totalDays - currentDayIndex;
+  
+  // UI Display values (supporting both static and shrinking list approaches)
+  const displayTotal = totalDaysCount ?? missingDays.length;
+  const displayCurrent = dayNumber ?? (currentDayIndex + 1);
+  
+  // Remaining days calculation compatible with both approaches
+  const remainingDays = missingDays.length - currentDayIndex;
 
   const formatDate = (date: Date) => {
     return date.toLocaleDateString(undefined, {
@@ -81,9 +90,9 @@ export const DailyAnketDialog: React.FC<DailyAnketDialogProps> = ({
       <Dialog open={open} maxWidth="sm" fullWidth>
         <DialogTitle>
           Daily Spending Report
-          {totalDays > 1 && (
+          {displayTotal > 1 && (
             <Typography variant="subtitle2" color="text.secondary">
-              Day {currentDayIndex + 1} of {totalDays}
+              Day {displayCurrent} of {displayTotal}
             </Typography>
           )}
         </DialogTitle>

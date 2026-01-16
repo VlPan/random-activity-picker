@@ -12,6 +12,7 @@ export const useAnketCheck = () => {
   const [showAnket, setShowAnket] = useState(false);
   const [currentDayIndex, setCurrentDayIndex] = useState(0);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [initialDaysCount, setInitialDaysCount] = useState(0);
 
   // Calculate missing days
   const missingDays = useMemo(() => {
@@ -26,8 +27,10 @@ export const useAnketCheck = () => {
     let startDate: Date;
     
     if (lastAnketDate) {
+      // Parse YYYY-MM-DD manually to ensure local time (avoid UTC offset issues)
+      const [y, m, d] = lastAnketDate.split('-').map(Number);
+      startDate = new Date(y, m - 1, d);
       // Start from the day after lastAnketDate
-      startDate = new Date(lastAnketDate);
       startDate.setDate(startDate.getDate() + 1);
     } else {
       // First time use - only ask for yesterday
@@ -47,6 +50,7 @@ export const useAnketCheck = () => {
   // Show anket dialog if there are missing days (only once on init)
   useEffect(() => {
     if (!isInitialized && missingDays.length > 0) {
+      setInitialDaysCount(missingDays.length);
       setShowAnket(true);
       setIsInitialized(true);
     } else if (!isInitialized && missingDays.length === 0) {
@@ -95,9 +99,11 @@ export const useAnketCheck = () => {
     // Update lastAnketDate to current day
     setLastAnketDate(dateKey);
 
-    // Move to next day or close dialog
-    if (currentDayIndex < missingDays.length - 1) {
-      setCurrentDayIndex(prev => prev + 1);
+    // Check if there are more days to process.
+    // Since missingDays is derived from lastAnketDate, the list will shrink by 1 on the next render.
+    // We keep currentDayIndex at 0 to point to the next day in the shifted list.
+    if (missingDays.length > 1) {
+      // List will shift, next day becomes index 0. Do not increment index.
     } else {
       setShowAnket(false);
       setCurrentDayIndex(0);
@@ -122,5 +128,7 @@ export const useAnketCheck = () => {
     currentDayIndex,
     handleSubmit,
     handleSkipAll,
+    currentDayNumber: initialDaysCount > 0 ? (initialDaysCount - missingDays.length + 1) : 1,
+    totalDays: initialDaysCount > 0 ? initialDaysCount : missingDays.length,
   };
 };

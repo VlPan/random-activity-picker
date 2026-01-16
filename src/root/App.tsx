@@ -14,7 +14,15 @@ import { useAnketCheck } from "../hooks/useAnketCheck";
 
 // Wrapper component that uses the anket hook (must be inside UserProvider)
 function AppContent() {
-  const { showAnket, missingDays, currentDayIndex, handleSubmit, handleSkipAll } = useAnketCheck();
+  const { 
+    showAnket, 
+    missingDays, 
+    currentDayIndex, 
+    handleSubmit, 
+    handleSkipAll,
+    currentDayNumber,
+    totalDays 
+  } = useAnketCheck();
 
   return (
     <>
@@ -31,6 +39,8 @@ function AppContent() {
         currentDayIndex={currentDayIndex}
         onSubmit={handleSubmit}
         onSkipAll={handleSkipAll}
+        dayNumber={currentDayNumber}
+        totalDaysCount={totalDays}
       />
     </>
   );
