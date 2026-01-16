@@ -80,6 +80,74 @@ const Statistics = () => {
     }));
   }, [history, timeRange]);
 
+  const financialData = useMemo(() => {
+    const now = new Date();
+    now.setHours(23, 59, 59, 999);
+
+    let startDate = new Date();
+    startDate.setHours(0, 0, 0, 0);
+
+    if (timeRange === 'week') {
+      const day = startDate.getDay();
+      const diff = startDate.getDate() - day + (day === 0 ? -6 : 1);
+      startDate.setDate(diff);
+    } else if (timeRange === '7days') {
+      startDate.setDate(startDate.getDate() - 6);
+    } else if (timeRange === '30days') {
+      startDate.setDate(startDate.getDate() - 29);
+    } else if (timeRange === '100days') {
+      startDate.setDate(startDate.getDate() - 99);
+    } else if (timeRange === '300days') {
+      startDate.setDate(startDate.getDate() - 299);
+    }
+
+    // Filter relevant history items
+    const relevantItems = history.filter(item => {
+      if (item.type !== 'balance') return false;
+      const itemDate = new Date(item.date);
+      return itemDate >= startDate && itemDate <= now;
+    });
+
+    // Group by date
+    const dailyStats = new Map<string, { income: number; expense: number }>();
+
+    const getLocalDateKey = (date: Date) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+
+    // Initialize all days
+    const currentDate = new Date(startDate);
+    while (currentDate <= now) {
+      const dateKey = getLocalDateKey(currentDate);
+      dailyStats.set(dateKey, { income: 0, expense: 0 });
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    // Fill with data
+    relevantItems.forEach(item => {
+      const itemDate = new Date(item.date);
+      const dateKey = getLocalDateKey(itemDate);
+      if (dailyStats.has(dateKey)) {
+        const stats = dailyStats.get(dateKey)!;
+        if (item.amount > 0) {
+          stats.income += item.amount;
+        } else {
+          stats.expense += Math.abs(item.amount);
+        }
+      }
+    });
+
+    return Array.from(dailyStats.entries()).map(([date, stats]) => ({
+      date,
+      displayDate: new Date(date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+      income: Number(stats.income.toFixed(2)),
+      expense: Number(stats.expense.toFixed(2))
+    }));
+  }, [history, timeRange]);
+
   const handleRangeChange = (_event: React.MouseEvent<HTMLElement>, newRange: TimeRange | null) => {
     if (newRange !== null) {
       setTimeRange(newRange);
@@ -137,6 +205,39 @@ const Statistics = () => {
             <Typography variant="body2" color="text.secondary">
                 Total rewards in this period: {chartData.reduce((sum, item) => sum + item.count, 0)}
             </Typography>
+        </Box>
+      </Paper>
+
+      <Paper sx={{ p: 3, mb: 3 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+          <Typography variant="h6">Income vs Expenses (ZL)</Typography>
+        </Box>
+
+        <Box sx={{ height: 400, width: '100%' }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={financialData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis 
+                dataKey="displayDate" 
+                tick={{ fontSize: 12 }}
+                interval={timeRange === '300days' || timeRange === '100days' ? 'preserveStartEnd' : 0}
+              />
+              <YAxis allowDecimals={false} />
+              <Tooltip 
+                contentStyle={{ backgroundColor: theme.palette.background.paper, color: theme.palette.text.primary }}
+                formatter={(value: number | undefined) => [`${value} ZL`, undefined]}
+                labelFormatter={(label) => `Date: ${label}`}
+              />
+              <Bar dataKey="income" name="Income" fill="#2e7d32" />
+              <Bar dataKey="expense" name="Expense" fill="#d32f2f" />
+            </BarChart>
+          </ResponsiveContainer>
+        </Box>
+
+        <Box sx={{ mt: 2, textAlign: 'center' }}>
+          <Typography variant="body2" color="text.secondary">
+            Net Change: {(financialData.reduce((sum, item) => sum + item.income - item.expense, 0)).toFixed(2)} ZL
+          </Typography>
         </Box>
       </Paper>
     </Box>
