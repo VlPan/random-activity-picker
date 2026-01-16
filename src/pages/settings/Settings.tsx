@@ -1,11 +1,21 @@
-import { Box, Typography, Slider, Paper } from '@mui/material';
+import { Box, Typography, Slider, Paper, TextField, Divider, Stack } from '@mui/material';
 import { useUserContext } from '../../contexts/UserContext';
 
 const Settings = () => {
-  const { luckyNumber, setLuckyNumber } = useUserContext();
+  const { luckyNumber, setLuckyNumber, rewardSettings, updateRewardSettings } = useUserContext();
 
   const handleSliderChange = (_event: Event, newValue: number | number[]) => {
     setLuckyNumber(newValue as number);
+  };
+
+  const handleChange = (field: keyof typeof rewardSettings) => (event: React.ChangeEvent<HTMLInputElement>) => {
+    const val = Number(event.target.value);
+    if (!isNaN(val) && val >= 0) {
+      updateRewardSettings({
+        ...rewardSettings,
+        [field]: val
+      });
+    }
   };
 
   return (
@@ -14,7 +24,7 @@ const Settings = () => {
         Settings
       </Typography>
 
-      <Paper sx={{ p: 4 }}>
+      <Paper sx={{ p: 4, mb: 3 }}>
         <Typography variant="h6" gutterBottom>
           Lucky Number
         </Typography>
@@ -32,6 +42,81 @@ const Settings = () => {
             marks
             valueLabelDisplay="on"
           />
+        </Box>
+      </Paper>
+
+      <Paper sx={{ p: 4 }}>
+        <Typography variant="h6" gutterBottom>
+          Reward Formulas
+        </Typography>
+        
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 2 }}>Min Rewards</Typography>
+          <Stack direction="row" spacing={2} alignItems="center">
+            <Typography>For every</Typography>
+            <Box sx={{ width: 100 }}>
+              <TextField
+                type="number"
+                size="small"
+                value={rewardSettings.minTimeBlock}
+                onChange={handleChange('minTimeBlock')}
+                label="Minutes"
+              />
+            </Box>
+            <Typography>Getting</Typography>
+            <Box sx={{ width: 100 }}>
+              <TextField
+                type="number"
+                size="small"
+                value={rewardSettings.minPoints}
+                onChange={handleChange('minPoints')}
+                label="Points"
+              />
+            </Box>
+          </Stack>
+        </Box>
+
+        <Divider sx={{ my: 3 }} />
+
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 2 }}>Max Rewards</Typography>
+          <Stack direction="row" spacing={2} alignItems="center">
+            <Typography>For every</Typography>
+            <Box sx={{ width: 100 }}>
+              <TextField
+                type="number"
+                size="small"
+                value={rewardSettings.maxTimeBlock}
+                onChange={handleChange('maxTimeBlock')}
+                label="Minutes"
+              />
+            </Box>
+            <Typography>Getting</Typography>
+            <Box sx={{ width: 100 }}>
+              <TextField
+                type="number"
+                size="small"
+                value={rewardSettings.maxPoints}
+                onChange={handleChange('maxPoints')}
+                label="Points"
+              />
+            </Box>
+          </Stack>
+          
+          <Box sx={{ mt: 2 }}>
+            <Stack direction="row" spacing={2} alignItems="center">
+                <Typography>If task runs long - reward every</Typography>
+                <Box sx={{ width: 100 }}>
+                <TextField
+                    type="number"
+                    size="small"
+                    value={rewardSettings.progressiveInterval}
+                    onChange={handleChange('progressiveInterval')}
+                    label="Minutes"
+                />
+                </Box>
+            </Stack>
+          </Box>
         </Box>
       </Paper>
     </Box>

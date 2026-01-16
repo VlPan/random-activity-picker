@@ -66,7 +66,7 @@ const SortableTab = (props: any) => {
 
 const Randomizer = () => {
   const { playlists, loading, activities, updatePlaylist, deletePlaylist, reorderPlaylists } = useActivityContext();
-  const { todoItems, addTodo, removeTodo, toggleComplete, clearTodos, resetTodoTime } = useTodoContext();
+  const { todoItems, addTodo, removeTodo, toggleComplete, clearTodos, resetTodoTime, activeTaskId, pauseTimer, resumeTimer, completeTask } = useTodoContext();
   const [selectedTab, setSelectedTab] = useState<TabSelection>({ type: 'playlist', index: 0 });
   const [isAddActivityOpen, setIsAddActivityOpen] = useState(false);
   const [editingActivity, setEditingActivity] = useState<Activity | undefined>(undefined);
@@ -176,10 +176,14 @@ const Randomizer = () => {
   const handleToggleTodo = (id: string) => {
     const item = todoItems.find(i => i.id === id);
     if (item && !item.isCompleted) {
+        if (activeTaskId === id) {
+            pauseTimer();
+        }
         setCompletedTaskId(id);
         setIsRewardDialogOpen(true);
+    } else {
+        toggleComplete(id);
     }
-    toggleComplete(id);
   };
 
   const handleDeleteTodo = (id: string) => {
@@ -525,8 +529,14 @@ const Randomizer = () => {
         }}
         onTakeRewards={() => {
             if (completedTaskId) {
+                completeTask(completedTaskId);
                 resetTodoTime(completedTaskId);
             }
+            setIsRewardDialogOpen(false);
+            setCompletedTaskId(null);
+        }}
+        onContinueTask={() => {
+            resumeTimer();
             setIsRewardDialogOpen(false);
             setCompletedTaskId(null);
         }}
