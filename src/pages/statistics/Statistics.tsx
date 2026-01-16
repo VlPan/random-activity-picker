@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Box, Typography, Paper, ToggleButton, ToggleButtonGroup, useTheme } from '@mui/material';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend } from 'recharts';
 import { useUserContext } from '../../contexts/UserContext';
 
 type TimeRange = 'week' | '7days' | '30days' | '100days' | '300days';
@@ -148,6 +148,68 @@ const Statistics = () => {
     }));
   }, [history, timeRange]);
 
+  const spendingData = useMemo(() => {
+    const now = new Date();
+    now.setHours(23, 59, 59, 999);
+
+    let startDate = new Date();
+    startDate.setHours(0, 0, 0, 0);
+
+    if (timeRange === 'week') {
+      const day = startDate.getDay();
+      const diff = startDate.getDate() - day + (day === 0 ? -6 : 1);
+      startDate.setDate(diff);
+    } else if (timeRange === '7days') {
+      startDate.setDate(startDate.getDate() - 6);
+    } else if (timeRange === '30days') {
+      startDate.setDate(startDate.getDate() - 29);
+    } else if (timeRange === '100days') {
+      startDate.setDate(startDate.getDate() - 99);
+    } else if (timeRange === '300days') {
+      startDate.setDate(startDate.getDate() - 299);
+    }
+
+    // Filter relevant history items (expenses only)
+    const expenses = history.filter(item => {
+      if (item.type !== 'balance') return false;
+      if (item.amount >= 0) return false;
+      
+      const itemDate = new Date(item.date);
+      return itemDate >= startDate && itemDate <= now;
+    });
+
+    const categories = {
+      Shop: 0,
+      Bills: 0,
+      Other: 0
+    };
+
+    expenses.forEach(item => {
+      const amount = Math.abs(item.amount);
+      const reason = item.reason || '';
+      
+      if (reason.includes('Bought')) {
+        categories.Shop += amount;
+      } else if (reason.includes('Bill') || reason.includes('Paid')) {
+        categories.Bills += amount;
+      } else {
+        categories.Other += amount;
+      }
+    });
+
+    return [
+      { name: 'Shop', value: Number(categories.Shop.toFixed(2)) },
+      { name: 'Bills', value: Number(categories.Bills.toFixed(2)) },
+      { name: 'Other', value: Number(categories.Other.toFixed(2)) }
+    ].filter(item => item.value > 0);
+  }, [history, timeRange]);
+
+  const SPENDING_COLORS = {
+    Shop: '#1976d2',
+    Bills: '#ed6c02',
+    Other: '#9e9e9e'
+  };
+
   const handleRangeChange = (_event: React.MouseEvent<HTMLElement>, newRange: TimeRange | null) => {
     if (newRange !== null) {
       setTimeRange(newRange);
@@ -239,6 +301,39 @@ const Statistics = () => {
             Net Change: {(financialData.reduce((sum, item) => sum + item.income - item.expense, 0)).toFixed(2)} ZL
           </Typography>
         </Box>
+      </Paper>
+
+      <Paper sx={{ p: 3, mb: 3 }}>
+        <Typography variant="h6" gutterBottom>Spending Breakdown</Typography>
+        
+        {spendingData.length > 0 ? (
+          <Box sx={{ height: 400, width: '100%' }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={spendingData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, percent }: { name?: string | number; percent?: number }) => `${name} ${(percent ? percent * 100 : 0).toFixed(0)}%`}
+                  outerRadius={150}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {spendingData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={SPENDING_COLORS[entry.name as keyof typeof SPENDING_COLORS]} />
+                  ))}
+                </Pie>
+                <Tooltip formatter={(value: number | undefined) => [`${value} ZL`, undefined]} />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          </Box>
+        ) : (
+          <Box sx={{ py: 4, textAlign: 'center' }}>
+            <Typography color="text.secondary">No expenses in this period</Typography>
+          </Box>
+        )}
       </Paper>
     </Box>
   );
