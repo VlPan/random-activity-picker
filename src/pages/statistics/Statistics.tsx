@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Box, Typography, Paper, ToggleButton, ToggleButtonGroup, useTheme } from '@mui/material';
+import { Box, Typography, Paper, ToggleButton, ToggleButtonGroup, useTheme, Card, CardContent } from '@mui/material';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend } from 'recharts';
 import { useUserContext } from '../../contexts/UserContext';
 
@@ -10,27 +10,101 @@ const Statistics = () => {
   const theme = useTheme();
   const [timeRange, setTimeRange] = useState<TimeRange>('week');
 
-  const chartData = useMemo(() => {
-    const now = new Date();
-    now.setHours(23, 59, 59, 999); // End of today
-
-    let startDate = new Date();
+  const getStartDate = (range: TimeRange, endDate: Date) => {
+    const startDate = new Date(endDate);
     startDate.setHours(0, 0, 0, 0);
 
-    if (timeRange === 'week') {
-      // Get Monday of current week
+    if (range === 'week') {
       const day = startDate.getDay();
-      const diff = startDate.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is sunday
+      const diff = startDate.getDate() - day + (day === 0 ? -6 : 1);
       startDate.setDate(diff);
-    } else if (timeRange === '7days') {
+    } else if (range === '7days') {
       startDate.setDate(startDate.getDate() - 6);
-    } else if (timeRange === '30days') {
+    } else if (range === '30days') {
       startDate.setDate(startDate.getDate() - 29);
-    } else if (timeRange === '100days') {
+    } else if (range === '100days') {
       startDate.setDate(startDate.getDate() - 99);
-    } else if (timeRange === '300days') {
+    } else if (range === '300days') {
       startDate.setDate(startDate.getDate() - 299);
     }
+    return startDate;
+  };
+
+  const taskCompletionData = useMemo(() => {
+    const now = new Date();
+    now.setHours(23, 59, 59, 999);
+    const startDate = getStartDate(timeRange, now);
+
+    const relevantItems = history.filter(item => {
+      if (!item.reason.startsWith('Task Reward')) return false;
+      const itemDate = new Date(item.date);
+      return itemDate >= startDate && itemDate <= now;
+    });
+
+    const dailyStats = new Map<string, { count: number; points: number }>();
+
+    const getLocalDateKey = (date: Date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+    
+    // Initialize days
+    const currentDate = new Date(startDate);
+    while (currentDate <= now) {
+      const dateKey = getLocalDateKey(currentDate);
+      dailyStats.set(dateKey, { count: 0, points: 0 });
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    relevantItems.forEach(item => {
+      const itemDate = new Date(item.date);
+      const dateKey = getLocalDateKey(itemDate);
+      if (dailyStats.has(dateKey)) {
+        const stats = dailyStats.get(dateKey)!;
+        stats.count += 1; // Count 1 per task completion event
+        stats.points += item.amount;
+      }
+    });
+
+    return Array.from(dailyStats.entries()).map(([date, stats]) => ({
+      date,
+      displayDate: new Date(date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+      count: stats.count,
+      points: stats.points
+    }));
+  }, [history, timeRange]);
+
+  const productivityStats = useMemo(() => {
+    const totalTasks = taskCompletionData.reduce((acc, curr) => acc + curr.count, 0);
+    const totalPoints = taskCompletionData.reduce((acc, curr) => acc + curr.points, 0);
+    
+    // Calculate days in range
+    const now = new Date();
+    now.setHours(23, 59, 59, 999);
+    const startDate = getStartDate(timeRange, now);
+    // Difference in days + 1
+    const diffTime = Math.abs(now.getTime() - startDate.getTime());
+    const daysInRange = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+    // Note: getStartDate sets time to 00:00:00. now is 23:59:59.
+    // So diff is close to X.99 days. Ceil should give X+1? 
+    // Example: Today (Mon) 00:00 to Today 23:59. Diff ~24h. Ceil(1) = 1. Correct.
+    // Example: Mon 00:00 to Tue 23:59. Diff ~48h. Ceil(2) = 2. Correct.
+    
+    const avgTasks = daysInRange > 0 ? (totalTasks / daysInRange) : 0;
+
+    return {
+      totalTasks,
+      totalPoints,
+      avgTasks: avgTasks.toFixed(1)
+    };
+  }, [taskCompletionData, timeRange]);
+
+  const chartData = useMemo(() => {
+    const now = new Date();
+    now.setHours(23, 59, 59, 999);
+    const startDate = getStartDate(timeRange, now);
 
     // Filter relevant history items
     const relevantItems = history.filter(item => {
@@ -39,13 +113,17 @@ const Statistics = () => {
       const isTaskReward = item.reason.startsWith('Task Reward');
       
       if (!isRandomReward && !isTaskReward) return false;
-      
-      const itemDate = new Date(item.date);
-      return itemDate >= startDate && itemDate <= now;
+
+      // Include BOTH Random Rewards AND Task Rewards for "Rewards Received"
+      return true;
+
+    }).filter(item => {
+        const itemDate = new Date(item.date);
+        return itemDate >= startDate && itemDate <= now;
     });
 
     // Group by date
-    const dailyCounts = new Map<string, number>();
+    const dailyStats = new Map<string, { count: number; points: number }>();
 
     const getLocalDateKey = (date: Date) => {
         const year = date.getFullYear();
@@ -58,7 +136,7 @@ const Statistics = () => {
     const currentDate = new Date(startDate);
     while (currentDate <= now) {
       const dateKey = getLocalDateKey(currentDate);
-      dailyCounts.set(dateKey, 0);
+      dailyStats.set(dateKey, { count: 0, points: 0 });
       currentDate.setDate(currentDate.getDate() + 1);
     }
 
@@ -66,40 +144,47 @@ const Statistics = () => {
     relevantItems.forEach(item => {
       const itemDate = new Date(item.date);
       const dateKey = getLocalDateKey(itemDate);
-      if (dailyCounts.has(dateKey)) {
-        const count = item.count || 1; // Default to 1 for backward compatibility
-        dailyCounts.set(dateKey, (dailyCounts.get(dateKey) || 0) + count);
+      if (dailyStats.has(dateKey)) {
+        const stats = dailyStats.get(dateKey)!;
+        const count = item.count || 1; // Default to 1
+        stats.count += count;
+        stats.points += item.amount;
       }
     });
 
     // Convert to array
-    return Array.from(dailyCounts.entries()).map(([date, count]) => ({
+    return Array.from(dailyStats.entries()).map(([date, stats]) => ({
       date,
       displayDate: new Date(date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
-      count
+      count: stats.count,
+      points: stats.points
     }));
   }, [history, timeRange]);
+
+  const randomRewardStats = useMemo(() => {
+    const totalRewards = chartData.reduce((acc, curr) => acc + curr.count, 0);
+    const totalPoints = chartData.reduce((acc, curr) => acc + curr.points, 0);
+    
+    const now = new Date();
+    now.setHours(23, 59, 59, 999);
+    const startDate = getStartDate(timeRange, now);
+    const diffTime = Math.abs(now.getTime() - startDate.getTime());
+    const daysInRange = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+    
+    const avgRewards = daysInRange > 0 ? (totalRewards / daysInRange) : 0;
+
+    return {
+      totalRewards,
+      totalPoints,
+      avgRewards: avgRewards.toFixed(1)
+    };
+  }, [chartData, timeRange]);
 
   const financialData = useMemo(() => {
     const now = new Date();
     now.setHours(23, 59, 59, 999);
 
-    let startDate = new Date();
-    startDate.setHours(0, 0, 0, 0);
-
-    if (timeRange === 'week') {
-      const day = startDate.getDay();
-      const diff = startDate.getDate() - day + (day === 0 ? -6 : 1);
-      startDate.setDate(diff);
-    } else if (timeRange === '7days') {
-      startDate.setDate(startDate.getDate() - 6);
-    } else if (timeRange === '30days') {
-      startDate.setDate(startDate.getDate() - 29);
-    } else if (timeRange === '100days') {
-      startDate.setDate(startDate.getDate() - 99);
-    } else if (timeRange === '300days') {
-      startDate.setDate(startDate.getDate() - 299);
-    }
+    const startDate = getStartDate(timeRange, now);
 
     // Filter relevant history items
     const relevantItems = history.filter(item => {
@@ -152,22 +237,7 @@ const Statistics = () => {
     const now = new Date();
     now.setHours(23, 59, 59, 999);
 
-    let startDate = new Date();
-    startDate.setHours(0, 0, 0, 0);
-
-    if (timeRange === 'week') {
-      const day = startDate.getDay();
-      const diff = startDate.getDate() - day + (day === 0 ? -6 : 1);
-      startDate.setDate(diff);
-    } else if (timeRange === '7days') {
-      startDate.setDate(startDate.getDate() - 6);
-    } else if (timeRange === '30days') {
-      startDate.setDate(startDate.getDate() - 29);
-    } else if (timeRange === '100days') {
-      startDate.setDate(startDate.getDate() - 99);
-    } else if (timeRange === '300days') {
-      startDate.setDate(startDate.getDate() - 299);
-    }
+    const startDate = getStartDate(timeRange, now);
 
     // Filter relevant history items (expenses only)
     const expenses = history.filter(item => {
@@ -208,22 +278,7 @@ const Statistics = () => {
     const now = new Date();
     now.setHours(23, 59, 59, 999);
 
-    let startDate = new Date();
-    startDate.setHours(0, 0, 0, 0);
-
-    if (timeRange === 'week') {
-      const day = startDate.getDay();
-      const diff = startDate.getDate() - day + (day === 0 ? -6 : 1);
-      startDate.setDate(diff);
-    } else if (timeRange === '7days') {
-      startDate.setDate(startDate.getDate() - 6);
-    } else if (timeRange === '30days') {
-      startDate.setDate(startDate.getDate() - 29);
-    } else if (timeRange === '100days') {
-      startDate.setDate(startDate.getDate() - 99);
-    } else if (timeRange === '300days') {
-      startDate.setDate(startDate.getDate() - 299);
-    }
+    const startDate = getStartDate(timeRange, now);
 
     // Filter relevant history items (income only, points only)
     const incomeItems = history.filter(item => {
@@ -285,24 +340,46 @@ const Statistics = () => {
 
   return (
     <Box sx={{ maxWidth: '1200px', mx: 'auto' }}>
-      <Typography variant="h4" gutterBottom>Statistics</Typography>
-
-      <Paper sx={{ p: 3, mb: 3 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
-          <Typography variant="h6">Random Rewards Received</Typography>
-          <ToggleButtonGroup
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Typography variant="h4">Statistics</Typography>
+        <ToggleButtonGroup
             value={timeRange}
             exclusive
             onChange={handleRangeChange}
             aria-label="time range"
             size="small"
-          >
+        >
             <ToggleButton value="week">This Week</ToggleButton>
             <ToggleButton value="7days">Last 7 Days</ToggleButton>
             <ToggleButton value="30days">Last 30 Days</ToggleButton>
             <ToggleButton value="100days">Last 100 Days</ToggleButton>
             <ToggleButton value="300days">Last 300 Days</ToggleButton>
-          </ToggleButtonGroup>
+        </ToggleButtonGroup>
+      </Box>
+
+      {/* Rewards Received Section */}
+      <Paper sx={{ p: 3, mb: 3 }}>
+        <Typography variant="h6" gutterBottom>Rewards Received</Typography>
+
+        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2, mb: 3 }}>
+            <Card elevation={2} sx={{ flex: 1, bgcolor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : '#f5f5f5' }}>
+                <CardContent>
+                    <Typography color="text.secondary" gutterBottom>Total Rewards</Typography>
+                    <Typography variant="h4">{randomRewardStats.totalRewards}</Typography>
+                </CardContent>
+            </Card>
+            <Card elevation={2} sx={{ flex: 1, bgcolor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : '#f5f5f5' }}>
+                <CardContent>
+                    <Typography color="text.secondary" gutterBottom>Avg Rewards / Day</Typography>
+                    <Typography variant="h4">{randomRewardStats.avgRewards}</Typography>
+                </CardContent>
+            </Card>
+            <Card elevation={2} sx={{ flex: 1, bgcolor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : '#f5f5f5' }}>
+                <CardContent>
+                    <Typography color="text.secondary" gutterBottom>Total Points</Typography>
+                    <Typography variant="h4">{randomRewardStats.totalPoints}</Typography>
+                </CardContent>
+            </Card>
         </Box>
 
         <Box sx={{ height: 400, width: '100%' }}>
@@ -329,11 +406,56 @@ const Statistics = () => {
             </BarChart>
           </ResponsiveContainer>
         </Box>
+      </Paper>
+
+      {/* Productivity Overview */}
+      <Paper sx={{ p: 3, mb: 3 }}>
+        <Typography variant="h6" gutterBottom>Productivity Overview</Typography>
         
-        <Box sx={{ mt: 2, textAlign: 'center' }}>
-            <Typography variant="body2" color="text.secondary">
-                Total rewards in this period: {chartData.reduce((sum, item) => sum + item.count, 0)}
-            </Typography>
+        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2, mb: 3 }}>
+            <Card elevation={2} sx={{ flex: 1, bgcolor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : '#f5f5f5' }}>
+                <CardContent>
+                    <Typography color="text.secondary" gutterBottom>Total Tasks Completed</Typography>
+                    <Typography variant="h4">{productivityStats.totalTasks}</Typography>
+                </CardContent>
+            </Card>
+            <Card elevation={2} sx={{ flex: 1, bgcolor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : '#f5f5f5' }}>
+                <CardContent>
+                    <Typography color="text.secondary" gutterBottom>Avg Tasks / Day</Typography>
+                    <Typography variant="h4">{productivityStats.avgTasks}</Typography>
+                </CardContent>
+            </Card>
+            <Card elevation={2} sx={{ flex: 1, bgcolor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : '#f5f5f5' }}>
+                <CardContent>
+                    <Typography color="text.secondary" gutterBottom>Total Points Earned</Typography>
+                    <Typography variant="h4">{productivityStats.totalPoints}</Typography>
+                </CardContent>
+            </Card>
+        </Box>
+
+        <Box sx={{ height: 400, width: '100%' }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={taskCompletionData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis 
+                dataKey="displayDate" 
+                tick={{ fontSize: 12 }}
+                interval={timeRange === '300days' || timeRange === '100days' ? 'preserveStartEnd' : 0}
+              />
+              <YAxis allowDecimals={false} />
+              <Tooltip 
+                contentStyle={{ backgroundColor: theme.palette.background.paper, color: theme.palette.text.primary }}
+                itemStyle={{ color: '#0288d1' }}
+                formatter={(value: number | undefined) => [value, 'Tasks']}
+                labelFormatter={(label) => `Date: ${label}`}
+              />
+              <Bar dataKey="count" fill="#0288d1">
+                {taskCompletionData.map((_, index) => (
+                    <Cell key={`cell-${index}`} fill="#0288d1" />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
         </Box>
       </Paper>
 
