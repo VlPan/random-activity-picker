@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Box, Typography, Button, IconButton, Stack, Checkbox } from '@mui/material';
+import { useState, useMemo } from 'react';
+import { Box, Typography, Button, IconButton, Stack, Checkbox, TextField } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
@@ -22,9 +22,42 @@ const Bills = () => {
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [billToCover, setBillToCover] = useState<Bill | null>(null);
   const [coverCost, setCoverCost] = useState(0);
+  const [manualCost, setManualCost] = useState<string>('');
 
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [billToDelete, setBillToDelete] = useState<string | null>(null);
+
+  const [order, setOrder] = useState<'asc' | 'desc'>('asc');
+  const [orderBy, setOrderBy] = useState<string>('');
+
+  const handleRequestSort = (property: string) => {
+    const isAsc = orderBy === property && order === 'asc';
+    setOrder(isAsc ? 'desc' : 'asc');
+    setOrderBy(property);
+  };
+
+  const sortedBills = useMemo(() => {
+    if (!orderBy) return bills;
+
+    return [...bills].sort((a, b) => {
+      if (orderBy === 'cost') {
+        const costA = a.cost;
+        const costB = b.cost;
+        
+        // Unfixed (null) bills always at the top
+        if (costA === null && costB === null) return 0;
+        if (costA === null) return -1;
+        if (costB === null) return 1;
+        
+        if (order === 'asc') {
+          return costA - costB;
+        } else {
+          return costB - costA;
+        }
+      }
+      return 0;
+    });
+  }, [bills, order, orderBy]);
 
   const handleAddClick = () => {
     setEditingBill(undefined);
@@ -57,15 +90,33 @@ const Bills = () => {
     }
   };
 
+  const calculateDiscountedCost = (cost: number, isBasicNecessity: boolean) => {
+      if (isBasicNecessity) {
+        const discount = rewardSettings.basicNecessityDiscount || 0;
+        return cost * (1 - discount / 100);
+      }
+      return cost;
+  }
+
   const handleCoverClick = (bill: Bill) => {
-    let cost = bill.cost;
-    if (bill.isBasicNecessity) {
-      const discount = rewardSettings.basicNecessityDiscount || 0;
-      cost = cost * (1 - discount / 100);
-    }
     setBillToCover(bill);
-    setCoverCost(cost);
+    if (bill.cost === null) {
+        setManualCost('');
+        setCoverCost(0);
+    } else {
+        setCoverCost(calculateDiscountedCost(bill.cost, bill.isBasicNecessity));
+    }
     setConfirmDialogOpen(true);
+  };
+
+  const handleManualCostChange = (val: string) => {
+    setManualCost(val);
+    const cost = parseFloat(val);
+    if (!isNaN(cost) && billToCover) {
+      setCoverCost(calculateDiscountedCost(cost, billToCover.isBasicNecessity));
+    } else {
+       setCoverCost(0);
+    }
   };
 
   const handleConfirmCover = () => {
@@ -80,13 +131,44 @@ const Bills = () => {
     }
   };
 
+  const getConfirmationContent = () => {
+    if (!billToCover) return '';
+    
+    if (billToCover.cost === null) {
+      return (
+        <Box>
+            <Typography sx={{ mb: 2 }}>
+                Enter the amount you are paying for "{billToCover.name}".
+            </Typography>
+            <TextField 
+                label="Amount (ZL)" 
+                type="number" 
+                value={manualCost} 
+                onChange={(e) => handleManualCostChange(e.target.value)}
+                fullWidth
+                autoFocus
+                sx={{ mb: 2 }}
+            />
+            {manualCost && !isNaN(parseFloat(manualCost)) && (
+                <Typography>
+                    Are you sure you want to cover "{billToCover.name}" for {coverCost.toFixed(2)} ZL? (Original: {parseFloat(manualCost).toFixed(2)} ZL)
+                </Typography>
+            )}
+        </Box>
+      );
+    }
+
+    return `Are you sure you want to cover "${billToCover.name}" for ${coverCost.toFixed(2)} ZL? (Original: ${billToCover.cost.toFixed(2)} ZL)`;
+  };
+
   const columns: ColumnDef<Bill>[] = [
     { id: 'name', label: 'Name', minWidth: 150 },
     { 
       id: 'cost', 
       label: 'Cost (ZL)', 
       align: 'right',
-      render: (bill) => bill.cost.toFixed(2)
+      render: (bill) => bill.cost !== null ? bill.cost.toFixed(2) : 'Unfixed',
+      sortable: true
     },
     {
       id: 'isBasicNecessity',
@@ -163,9 +245,12 @@ const Bills = () => {
       </Box>
 
       <DataTable 
-        data={bills}
+        data={sortedBills}
         columns={columns}
         minWidth={600}
+        order={order}
+        orderBy={orderBy}
+        onRequestSort={handleRequestSort}
       />
 
       <BillDialog
@@ -178,11 +263,12 @@ const Bills = () => {
       <ConfirmationDialog
         open={confirmDialogOpen}
         title="Cover Bill"
-        content={`Are you sure you want to cover "${billToCover?.name}" for ${coverCost.toFixed(2)} ZL? (Original: ${billToCover?.cost.toFixed(2)} ZL)`}
+        content={getConfirmationContent()}
         onConfirm={handleConfirmCover}
         onClose={() => setConfirmDialogOpen(false)}
         confirmLabel="Cover"
         confirmColor="success"
+        disabled={billToCover?.cost === null && (manualCost === '' || isNaN(parseFloat(manualCost)))}
       />
 
       <ConfirmationDialog

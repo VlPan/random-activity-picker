@@ -11,11 +11,12 @@ import {
 interface ConfirmationDialogProps {
   open: boolean;
   title: string;
-  content: string;
+  content: React.ReactNode;
   onConfirm: () => void;
   onClose: () => void;
   confirmLabel?: string;
   confirmColor?: 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
+  disabled?: boolean;
 }
 
 export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
@@ -26,6 +27,7 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
   onClose,
   confirmLabel = 'Confirm',
   confirmColor = 'primary',
+  disabled = false,
 }) => {
   return (
     <Dialog
@@ -36,7 +38,7 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
     >
       <DialogTitle id="alert-dialog-title">{title}</DialogTitle>
       <DialogContent>
-        <DialogContentText id="alert-dialog-description">
+        <DialogContentText component="div" id="alert-dialog-description">
           {content}
         </DialogContentText>
       </DialogContent>
@@ -44,7 +46,7 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
         <Button onClick={onClose} color="inherit">
           Cancel
         </Button>
-        <Button onClick={onConfirm} color={confirmColor} autoFocus>
+        <Button onClick={onConfirm} color={confirmColor} autoFocus disabled={disabled}>
           {confirmLabel}
         </Button>
       </DialogActions>
