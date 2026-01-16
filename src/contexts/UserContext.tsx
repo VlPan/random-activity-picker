@@ -11,16 +11,26 @@ interface RewardSettings {
   basicNecessityDiscount: number; // Percentage discount (0-100)
 }
 
+export interface HistoryItem {
+  id: string;
+  date: string;
+  amount: number;
+  type: 'points' | 'balance';
+  reason: string;
+}
+
 interface UserContextType {
   balance: number; // ZL
   points: number;  // Points
   luckyNumber: number;
   rewardSettings: RewardSettings;
-  updateBalance: (amount: number) => void;
-  updatePoints: (amount: number) => void;
+  history: HistoryItem[];
+  updateBalance: (amount: number, reason?: string) => void;
+  updatePoints: (amount: number, reason?: string) => void;
   exchangePoints: (pointsToExchange: number) => void;
   setLuckyNumber: (num: number) => void;
   updateRewardSettings: (settings: RewardSettings) => void;
+  clearHistory: () => void;
 }
 
 const defaultRewardSettings: RewardSettings = {
@@ -40,12 +50,14 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [points, setPoints] = useState<number>(0);
   const [luckyNumber, setLuckyNumberState] = useState<number>(2);
   const [rewardSettings, setRewardSettings] = useState<RewardSettings>(defaultRewardSettings);
+  const [history, setHistory] = useState<HistoryItem[]>([]);
 
   useEffect(() => {
     const storedBalance = localStorage.getItem('userBalance');
     const storedPoints = localStorage.getItem('userPoints');
     const storedLuckyNumber = localStorage.getItem('luckyNumber');
     const storedSettings = localStorage.getItem('rewardSettings');
+    const storedHistory = localStorage.getItem('userHistory');
 
     if (storedBalance) {
       setBalance(Number(storedBalance));
@@ -63,22 +75,47 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         console.error('Failed to parse reward settings', e);
       }
     }
+    if (storedHistory) {
+        try {
+            setHistory(JSON.parse(storedHistory));
+        } catch (e) {
+            console.error('Failed to parse history', e);
+        }
+    }
   }, []);
 
-  const updateBalance = (amount: number) => {
+  const addHistoryItem = (amount: number, type: 'points' | 'balance', reason: string) => {
+    const newItem: HistoryItem = {
+        id: crypto.randomUUID(),
+        date: new Date().toISOString(),
+        amount,
+        type,
+        reason
+    };
+    
+    setHistory(prev => {
+        const newHistory = [newItem, ...prev];
+        localStorage.setItem('userHistory', JSON.stringify(newHistory));
+        return newHistory;
+    });
+  };
+
+  const updateBalance = (amount: number, reason: string = 'Manual Adjustment') => {
     setBalance((prev) => {
       const newBalance = prev + amount;
       localStorage.setItem('userBalance', newBalance.toString());
       return newBalance;
     });
+    addHistoryItem(amount, 'balance', reason);
   };
 
-  const updatePoints = (amount: number) => {
+  const updatePoints = (amount: number, reason: string = 'Manual Adjustment') => {
     setPoints((prev) => {
       const newPoints = prev + amount;
       localStorage.setItem('userPoints', newPoints.toString());
       return newPoints;
     });
+    addHistoryItem(amount, 'points', reason);
   };
 
   const exchangePoints = (pointsToExchange: number) => {
@@ -88,17 +125,12 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     const rate = rewardSettings.conversionRate || 100;
     const zlAmount = pointsToExchange / rate;
 
-    setPoints((prev) => {
-      const newPoints = prev - pointsToExchange;
-      localStorage.setItem('userPoints', newPoints.toString());
-      return newPoints;
-    });
-
-    setBalance((prev) => {
-      const newBalance = prev + zlAmount;
-      localStorage.setItem('userBalance', newBalance.toString());
-      return newBalance;
-    });
+    // Use internal update logic to avoid double history entries if we called the public methods
+    // But actually, we want history entries for both.
+    // "Exchanged 100pts" (points -100) and "Exchanged for 1ZL" (balance +1).
+    
+    updatePoints(-pointsToExchange, 'Currency Exchange');
+    updateBalance(zlAmount, 'Currency Exchange');
   };
 
   const setLuckyNumber = (num: number) => {
@@ -111,16 +143,29 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem('rewardSettings', JSON.stringify(settings));
   };
 
+  const clearHistory = () => {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    
+    setHistory(prev => {
+        const newHistory = prev.filter(item => new Date(item.date) > sevenDaysAgo);
+        localStorage.setItem('userHistory', JSON.stringify(newHistory));
+        return newHistory;
+    });
+  };
+
   const value = {
     balance,
     points,
     luckyNumber,
     rewardSettings,
+    history,
     updateBalance,
     updatePoints,
     exchangePoints,
     setLuckyNumber,
     updateRewardSettings,
+    clearHistory
   };
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;

@@ -37,7 +37,7 @@ export const RandomRewardPicker = ({ open, onClose }: RandomRewardPickerProps) =
 
   const handleTakeRewards = () => {
     const total = rewards.reduce((a, b) => a + b, 0);
-    updatePoints(total);
+    updatePoints(total, 'Random Reward');
     onClose();
   };
 

@@ -72,7 +72,7 @@ const Shop = () => {
   const handleConfirmBuy = () => {
     if (itemToBuy) {
       if (balance >= buyCost) {
-        updateBalance(-buyCost);
+        updateBalance(-buyCost, `Shop Purchase: ${itemToBuy.name}`);
         if (!itemToBuy.isPersistent) {
           deleteItem(itemToBuy.id);
         }

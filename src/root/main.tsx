@@ -12,6 +12,7 @@ import Inventory from '../pages/inventory/Inventory.tsx';
 import Settings from '../pages/settings/Settings.tsx';
 import Bills from '../pages/bills/Bills.tsx';
 import Shop from '../pages/shop/Shop.tsx';
+import History from '../pages/history/History.tsx';
 import { ThemeProvider } from '@mui/material/styles';
 import {theme} from './theme.ts';
 
@@ -39,6 +40,10 @@ const router = createHashRouter([
       {
         path: "shop",
         element: <Shop />,
+      },
+      {
+        path: "history",
+        element: <History />,
       },
       {
         path: "settings",

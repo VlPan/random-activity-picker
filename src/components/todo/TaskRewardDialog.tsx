@@ -10,9 +10,10 @@ interface TaskRewardDialogProps {
   onTakeRewards: () => void;
   onContinueTask?: () => void;
   timeSpent?: number;
+  taskName?: string;
 }
 
-export const TaskRewardDialog = ({ open, onClose, onTakeRewards, onContinueTask, timeSpent }: TaskRewardDialogProps) => {
+export const TaskRewardDialog = ({ open, onClose, onTakeRewards, onContinueTask, timeSpent, taskName }: TaskRewardDialogProps) => {
   const { updatePoints, rewardSettings } = useUserContext();
   const { getFormattedTime } = useTodoContext();
   const { step, rewards, startGeneration, reset } = useRewardGeneration();
@@ -72,13 +73,17 @@ export const TaskRewardDialog = ({ open, onClose, onTakeRewards, onContinueTask,
 
   const handleTakeRewards = () => {
     const total = rewards.reduce((a, b) => a + b, 0);
-    updatePoints(total);
+    const reason = taskName ? `Task Reward: ${taskName}` : 'Task Reward';
+    updatePoints(total, reason);
     onTakeRewards();
   };
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Task Complete! Claim Rewards</DialogTitle>
+      <DialogTitle>
+          Task Complete! Claim Rewards
+          {taskName && <Typography variant="subtitle1" color="primary">{taskName}</Typography>}
+      </DialogTitle>
       <DialogContent>
         {timeSpent !== undefined && (
             <Typography variant="body2" color="text.secondary" align="center" sx={{ mt: 1 }}>

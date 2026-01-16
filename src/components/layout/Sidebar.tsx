@@ -19,6 +19,7 @@ import {
   Settings as SettingsIcon,
   Receipt as ReceiptIcon,
   ShoppingCart as ShoppingCartIcon,
+  History as HistoryIcon,
 } from '@mui/icons-material';
 import { useLayoutContext } from '../../contexts/LayoutContext';
 import { useUserContext } from '../../contexts/UserContext';
@@ -99,6 +100,7 @@ const Sidebar = () => {
     { text: 'Inventory', icon: <InventoryIcon />, path: '/inventory' },
     { text: 'Bills', icon: <ReceiptIcon />, path: '/bills' },
     { text: 'Shop', icon: <ShoppingCartIcon />, path: '/shop' },
+    { text: 'History', icon: <HistoryIcon />, path: '/history' },
     { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
   ];
 

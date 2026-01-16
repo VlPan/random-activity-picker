@@ -541,6 +541,7 @@ const Randomizer = () => {
             setCompletedTaskId(null);
         }}
         timeSpent={todoItems.find(i => i.id === completedTaskId)?.timeSpent}
+        taskName={todoItems.find(i => i.id === completedTaskId)?.displayName}
       />
     </Box>
   );

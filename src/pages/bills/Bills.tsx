@@ -70,7 +70,7 @@ const Bills = () => {
 
   const handleConfirmCover = () => {
     if (billToCover) {
-      updateBalance(-coverCost);
+      updateBalance(-coverCost, `Bill Payment: ${billToCover.name}`);
       updateBill({
         ...billToCover,
         lastCoveredDate: new Date().toISOString()

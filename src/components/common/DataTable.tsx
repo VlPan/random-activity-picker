@@ -7,6 +7,8 @@ import {
   TableRow,
   Paper,
   TableSortLabel,
+  Box,
+  Typography,
 } from '@mui/material';
 import type { ReactNode } from 'react';
 
@@ -28,6 +30,8 @@ interface DataTableProps<T> {
   orderBy?: string;
   order?: 'asc' | 'desc';
   onRequestSort?: (property: string) => void;
+  keyExtractor?: (item: T) => string | number;
+  emptyMessage?: string;
 }
 
 export const DataTable = <T,>({ 
@@ -39,12 +43,22 @@ export const DataTable = <T,>({
   orderBy,
   order,
   onRequestSort,
+  keyExtractor,
+  emptyMessage
 }: DataTableProps<T>) => {
   const createSortHandler = (property: string) => () => {
     if (onRequestSort) {
       onRequestSort(property);
     }
   };
+
+  if (data.length === 0 && emptyMessage) {
+      return (
+          <Box sx={{ p: 3, textAlign: 'center', bgcolor: 'background.paper', borderRadius: 1 }}>
+              <Typography color="text.secondary">{emptyMessage}</Typography>
+          </Box>
+      );
+  }
 
   return (
     <TableContainer component={Paper} elevation={elevation}>
@@ -79,27 +93,28 @@ export const DataTable = <T,>({
           </TableRow>
         </TableHead>
         <TableBody>
-          {data.map((row, index) => (
-            // using index as fallback key if no id property is available on row
-            // In a real app, we should probably enforce an id property or pass a key extractor
-            <TableRow
-              key={(row as any).id || index}
-              sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
-            >
-              {columns.map((column) => {
-                const value = (row as any)[column.id];
-                return (
-                  <TableCell 
-                    key={column.id} 
-                    align={column.align || 'left'}
-                    size={compact ? 'small' : 'medium'}
-                  >
-                    {column.render ? column.render(row) : value}
-                  </TableCell>
-                );
-              })}
-            </TableRow>
-          ))}
+          {data.map((row, index) => {
+            const key = keyExtractor ? keyExtractor(row) : ((row as any).id || index);
+            return (
+                <TableRow
+                key={key}
+                sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+                >
+                {columns.map((column) => {
+                    const value = (row as any)[column.id];
+                    return (
+                    <TableCell 
+                        key={column.id} 
+                        align={column.align || 'left'}
+                        size={compact ? 'small' : 'medium'}
+                    >
+                        {column.render ? column.render(row) : value}
+                    </TableCell>
+                    );
+                })}
+                </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
     </TableContainer>
