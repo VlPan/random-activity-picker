@@ -10,9 +10,10 @@ interface FloatingPanelProps {
   children: ReactNode;
   defaultExpanded?: boolean;
   width?: number | string;
+  action?: ReactNode;
 }
 
-export const FloatingPanel = ({ title, children, defaultExpanded = true, width = 300 }: FloatingPanelProps) => {
+export const FloatingPanel = ({ title, children, defaultExpanded = true, width = 300, action }: FloatingPanelProps) => {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
   const { sidebarWidth, isSidebarOpen } = useLayoutContext();
   const theme = useTheme();
@@ -51,9 +52,16 @@ export const FloatingPanel = ({ title, children, defaultExpanded = true, width =
         }}
         onClick={() => setIsExpanded(!isExpanded)}
       >
-        <Typography variant="subtitle2" fontWeight="bold">
-          {title}
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+            <Typography variant="subtitle2" fontWeight="bold" sx={{ mr: 1 }}>
+            {title}
+            </Typography>
+            {action && (
+                <Box onClick={(e) => e.stopPropagation()} sx={{ display: 'flex' }}>
+                    {action}
+                </Box>
+            )}
+        </Box>
         <IconButton size="small" sx={{ color: 'inherit', p: 0.5 }}>
           {isExpanded ? <ExpandMoreIcon fontSize="small" /> : <ExpandLessIcon fontSize="small" />}
         </IconButton>

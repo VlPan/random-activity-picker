@@ -28,7 +28,7 @@ const Settings = () => {
             onChange={handleSliderChange}
             min={0.5}
             max={5}
-            step={0.5}
+            step={0.1}
             marks
             valueLabelDisplay="on"
           />

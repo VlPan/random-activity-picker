@@ -13,6 +13,8 @@ interface TodoContextType {
   resumeTimer: () => void;
   toggleComplete: (id: string) => void;
   completeTask: (id: string) => void;
+  clearTodos: () => void;
+  resetTodoTime: (id: string) => void;
   getFormattedTime: (timeInSeconds: number) => string;
   activeTaskTime: number; // Current accumulated time for active task (including current session)
 }
@@ -24,6 +26,7 @@ export const TodoProvider = ({ children }: { children: ReactNode }) => {
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
   const [isPaused, setIsPaused] = useState<boolean>(false);
   const [activeTaskTime, setActiveTaskTime] = useState<number>(0);
+  const [isLoaded, setIsLoaded] = useState<boolean>(false);
 
   // Load from storage on mount
   useEffect(() => {
@@ -43,10 +46,14 @@ export const TodoProvider = ({ children }: { children: ReactNode }) => {
     
     if (storedActiveId) setActiveTaskId(storedActiveId);
     if (storedIsPaused) setIsPaused(storedIsPaused === 'true');
+    
+    setIsLoaded(true);
   }, []);
 
   // Save to storage on change
   useEffect(() => {
+    if (!isLoaded) return;
+
     localStorage.setItem('todo_items', JSON.stringify(todoItems));
     if (activeTaskId) {
       localStorage.setItem('todo_active_task', activeTaskId);
@@ -54,7 +61,7 @@ export const TodoProvider = ({ children }: { children: ReactNode }) => {
       localStorage.removeItem('todo_active_task');
     }
     localStorage.setItem('todo_is_paused', String(isPaused));
-  }, [todoItems, activeTaskId, isPaused]);
+  }, [todoItems, activeTaskId, isPaused, isLoaded]);
 
   // Update active task time every second
   useEffect(() => {
@@ -229,6 +236,25 @@ export const TodoProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
+  const clearTodos = () => {
+    setTodoItems([]);
+    setActiveTaskId(null);
+    setIsPaused(false);
+  };
+
+  const resetTodoTime = (id: string) => {
+    setTodoItems(prev => prev.map(item => {
+        if (item.id === id) {
+            return { ...item, timeSpent: 0 };
+        }
+        return item;
+    }));
+    
+    if (activeTaskId === id) {
+        setActiveTaskTime(0);
+    }
+  };
+
   const getFormattedTime = (seconds: number) => {
     if (seconds < 3600) {
       const m = Math.floor(seconds / 60);
@@ -252,6 +278,8 @@ export const TodoProvider = ({ children }: { children: ReactNode }) => {
     resumeTimer,
     toggleComplete,
     completeTask,
+    clearTodos,
+    resetTodoTime,
     getFormattedTime,
     activeTaskTime
   };
