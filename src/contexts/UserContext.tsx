@@ -27,11 +27,14 @@ interface UserContextType {
   luckyNumber: number;
   rewardSettings: RewardSettings;
   history: HistoryItem[];
+  lastAnketDate: string | null; // ISO date string (date only, e.g., "2026-01-15")
   updateBalance: (amount: number, reason?: string) => void;
+  updateBalanceWithDate: (amount: number, reason: string, customDate: string) => void;
   updatePoints: (amount: number, reason?: string, count?: number, duration?: number) => void;
   exchangePoints: (pointsToExchange: number) => void;
   setLuckyNumber: (num: number) => void;
   updateRewardSettings: (settings: RewardSettings) => void;
+  setLastAnketDate: (date: string) => void;
   clearHistory: () => void;
 }
 
@@ -53,6 +56,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [luckyNumber, setLuckyNumberState] = useState<number>(2);
   const [rewardSettings, setRewardSettings] = useState<RewardSettings>(defaultRewardSettings);
   const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [lastAnketDate, setLastAnketDateState] = useState<string | null>(null);
 
   useEffect(() => {
     const storedBalance = localStorage.getItem('userBalance');
@@ -60,6 +64,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     const storedLuckyNumber = localStorage.getItem('luckyNumber');
     const storedSettings = localStorage.getItem('rewardSettings');
     const storedHistory = localStorage.getItem('userHistory');
+    const storedLastAnketDate = localStorage.getItem('lastAnketDate');
 
     if (storedBalance) {
       setBalance(Number(storedBalance));
@@ -84,6 +89,9 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             console.error('Failed to parse history', e);
         }
     }
+    if (storedLastAnketDate) {
+      setLastAnketDateState(storedLastAnketDate);
+    }
   }, []);
 
   const addHistoryItem = (amount: number, type: 'points' | 'balance', reason: string, count?: number, duration?: number) => {
@@ -104,6 +112,22 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
+  const addHistoryItemWithDate = (amount: number, type: 'points' | 'balance', reason: string, customDate: string) => {
+    const newItem: HistoryItem = {
+        id: crypto.randomUUID(),
+        date: customDate,
+        amount,
+        type,
+        reason
+    };
+    
+    setHistory(prev => {
+        const newHistory = [newItem, ...prev];
+        localStorage.setItem('userHistory', JSON.stringify(newHistory));
+        return newHistory;
+    });
+  };
+
   const updateBalance = (amount: number, reason: string = 'Manual Adjustment') => {
     setBalance((prev) => {
       const newBalance = prev + amount;
@@ -111,6 +135,15 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       return newBalance;
     });
     addHistoryItem(amount, 'balance', reason);
+  };
+
+  const updateBalanceWithDate = (amount: number, reason: string, customDate: string) => {
+    setBalance((prev) => {
+      const newBalance = prev + amount;
+      localStorage.setItem('userBalance', newBalance.toString());
+      return newBalance;
+    });
+    addHistoryItemWithDate(amount, 'balance', reason, customDate);
   };
 
   const updatePoints = (amount: number, reason: string = 'Manual Adjustment', count?: number, duration?: number) => {
@@ -147,6 +180,11 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem('rewardSettings', JSON.stringify(settings));
   };
 
+  const setLastAnketDate = (date: string) => {
+    setLastAnketDateState(date);
+    localStorage.setItem('lastAnketDate', date);
+  };
+
   const clearHistory = () => {
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
@@ -164,11 +202,14 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     luckyNumber,
     rewardSettings,
     history,
+    lastAnketDate,
     updateBalance,
+    updateBalanceWithDate,
     updatePoints,
     exchangePoints,
     setLuckyNumber,
     updateRewardSettings,
+    setLastAnketDate,
     clearHistory
   };
 

@@ -9,6 +9,32 @@ import { BillProvider } from "../contexts/BillContext";
 import { ShopProvider } from "../contexts/ShopContext";
 import { Box, CssBaseline } from "@mui/material";
 import Sidebar from "../components/layout/Sidebar";
+import { DailyAnketDialog } from "../components/anket/DailyAnketDialog";
+import { useAnketCheck } from "../hooks/useAnketCheck";
+
+// Wrapper component that uses the anket hook (must be inside UserProvider)
+function AppContent() {
+  const { showAnket, missingDays, currentDayIndex, handleSubmit, handleSkipAll } = useAnketCheck();
+
+  return (
+    <>
+      <Box sx={{ display: "flex" }}>
+        <CssBaseline />
+        <Sidebar />
+        <Box component="main" sx={{ flexGrow: 1, p: 3, width: '100%' }}>
+          <Outlet />
+        </Box>
+      </Box>
+      <DailyAnketDialog
+        open={showAnket}
+        missingDays={missingDays}
+        currentDayIndex={currentDayIndex}
+        onSubmit={handleSubmit}
+        onSkipAll={handleSkipAll}
+      />
+    </>
+  );
+}
 
 function App() {
   return (
@@ -19,13 +45,7 @@ function App() {
             <BillProvider>
               <ShopProvider>
                 <TodoProvider>
-                  <Box sx={{ display: "flex" }}>
-                    <CssBaseline />
-                    <Sidebar />
-                    <Box component="main" sx={{ flexGrow: 1, p: 3, width: '100%' }}>
-                      <Outlet />
-                    </Box>
-                  </Box>
+                  <AppContent />
                 </TodoProvider>
               </ShopProvider>
             </BillProvider>
