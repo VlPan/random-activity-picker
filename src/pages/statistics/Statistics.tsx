@@ -592,7 +592,7 @@ const Statistics = () => {
               <XAxis 
                 dataKey="displayDate" 
                 tick={{ fontSize: 12 }}
-                interval={timeRange === '300days' || timeRange === '100days' ? 'preserveStartEnd' : 0}
+                interval={timeRange === 'week' || timeRange === '7days' ? 0 : 'preserveStartEnd'}
               />
               <YAxis allowDecimals={false} />
               <Tooltip 
@@ -637,7 +637,7 @@ const Statistics = () => {
               <XAxis 
                 dataKey="displayDate" 
                 tick={{ fontSize: 12 }}
-                interval={timeRange === '300days' || timeRange === '100days' ? 'preserveStartEnd' : 0}
+                interval={timeRange === 'week' || timeRange === '7days' ? 0 : 'preserveStartEnd'}
               />
               <YAxis allowDecimals={false} />
               <Tooltip 
@@ -688,7 +688,7 @@ const Statistics = () => {
               <XAxis 
                 dataKey="displayDate" 
                 tick={{ fontSize: 12 }}
-                interval={timeRange === '300days' || timeRange === '100days' ? 'preserveStartEnd' : 0}
+                interval={timeRange === 'week' || timeRange === '7days' ? 0 : 'preserveStartEnd'}
               />
               <YAxis allowDecimals={false} />
               <Tooltip 
@@ -723,7 +723,7 @@ const Statistics = () => {
               <XAxis 
                 dataKey="displayDate" 
                 tick={{ fontSize: 12 }}
-                interval={timeRange === '300days' || timeRange === '100days' ? 'preserveStartEnd' : 0}
+                interval={timeRange === 'week' || timeRange === '7days' ? 0 : 'preserveStartEnd'}
               />
               <YAxis />
               <Tooltip 
@@ -756,7 +756,7 @@ const Statistics = () => {
               <XAxis 
                 dataKey="displayDate" 
                 tick={{ fontSize: 12 }}
-                interval={timeRange === '300days' || timeRange === '100days' ? 'preserveStartEnd' : 0}
+                interval={timeRange === 'week' || timeRange === '7days' ? 0 : 'preserveStartEnd'}
               />
               <YAxis allowDecimals={false} />
               <Tooltip 
