@@ -13,6 +13,7 @@ import Settings from '../pages/settings/Settings.tsx';
 import Bills from '../pages/bills/Bills.tsx';
 import Shop from '../pages/shop/Shop.tsx';
 import History from '../pages/history/History.tsx';
+import Statistics from '../pages/statistics/Statistics.tsx';
 import { ThemeProvider } from '@mui/material/styles';
 import {theme} from './theme.ts';
 
@@ -44,6 +45,10 @@ const router = createHashRouter([
       {
         path: "history",
         element: <History />,
+      },
+      {
+        path: "statistics",
+        element: <Statistics />,
       },
       {
         path: "settings",
