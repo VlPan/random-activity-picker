@@ -13,10 +13,13 @@ import {
   IconButton,
   Typography,
   ToggleButton,
-  ToggleButtonGroup
+  ToggleButtonGroup,
+  Menu,
+  MenuItem
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { v4 as uuidv4 } from 'uuid';
 import type { ProjectStatus, Comment } from '../../models/project';
 import StatusIndicator from './StatusIndicator';
@@ -36,6 +39,8 @@ const StatusModal = ({ open, onClose, title, currentStatus, comments, onSave }: 
   const [newComment, setNewComment] = useState('');
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editingCommentText, setEditingCommentText] = useState('');
+  const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
+  const [activeCommentId, setActiveCommentId] = useState<string | null>(null);
 
   useEffect(() => {
     if (open) {
@@ -78,6 +83,16 @@ const StatusModal = ({ open, onClose, title, currentStatus, comments, onSave }: 
     ));
     setEditingCommentId(null);
     setEditingCommentText('');
+  };
+
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, commentId: string) => {
+    setMenuAnchorEl(event.currentTarget);
+    setActiveCommentId(commentId);
+  };
+
+  const handleMenuClose = () => {
+    setMenuAnchorEl(null);
+    setActiveCommentId(null);
   };
 
   const handleSave = () => {
@@ -152,29 +167,28 @@ const StatusModal = ({ open, onClose, title, currentStatus, comments, onSave }: 
                         alignItems="flex-start"
                         secondaryAction={
                             editingCommentId !== comment.id && (
-                                <Box>
-                                    <IconButton size="small" onClick={() => handleStartEditComment(comment)}>
-                                        <EditIcon fontSize="small" />
-                                    </IconButton>
-                                    <IconButton size="small" onClick={() => handleDeleteComment(comment.id)}>
-                                        <DeleteIcon fontSize="small" />
-                                    </IconButton>
-                                </Box>
+                                <IconButton size="small" onClick={(e) => handleMenuOpen(e, comment.id)}>
+                                    <MoreVertIcon fontSize="small" />
+                                </IconButton>
                             )
                         }
                         sx={{ borderBottom: '1px solid', borderColor: 'divider' }}
                     >
                         {editingCommentId === comment.id ? (
-                             <Box sx={{ width: '100%', display: 'flex', gap: 1 }}>
+                            <Box sx={{ width: '100%', display: 'flex', gap: 1 }}>
                                 <TextField
                                     fullWidth
+                                    multiline
+                                    minRows={2}
                                     size="small"
                                     value={editingCommentText}
                                     onChange={(e) => setEditingCommentText(e.target.value)}
                                     autoFocus
                                 />
-                                <Button size="small" onClick={handleSaveEditComment}>Save</Button>
-                                <Button size="small" onClick={() => setEditingCommentId(null)}>Cancel</Button>
+                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                    <Button size="small" variant="contained" onClick={handleSaveEditComment}>Save</Button>
+                                    <Button size="small" onClick={() => setEditingCommentId(null)}>Cancel</Button>
+                                </Box>
                              </Box>
                         ) : (
                             <ListItemText
@@ -186,6 +200,30 @@ const StatusModal = ({ open, onClose, title, currentStatus, comments, onSave }: 
                     </ListItem>
                 ))}
             </List>
+            
+            <Menu
+                anchorEl={menuAnchorEl}
+                open={Boolean(menuAnchorEl)}
+                onClose={handleMenuClose}
+            >
+                <MenuItem onClick={() => {
+                    const comment = localComments.find(c => c.id === activeCommentId);
+                    if (comment) {
+                        handleStartEditComment(comment);
+                    }
+                    handleMenuClose();
+                }}>
+                    <EditIcon fontSize="small" sx={{ mr: 1 }} /> Edit
+                </MenuItem>
+                <MenuItem onClick={() => {
+                    if (activeCommentId) {
+                        handleDeleteComment(activeCommentId);
+                    }
+                    handleMenuClose();
+                }}>
+                    <DeleteIcon fontSize="small" sx={{ mr: 1 }} /> Delete
+                </MenuItem>
+            </Menu>
         </Box>
       </DialogContent>
       <DialogActions>
