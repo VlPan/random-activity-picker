@@ -170,7 +170,7 @@ const Sidebar = () => {
           </>
         )}
         <Divider />
-        <Tooltip title={`Lucky Number: ${luckyNumber}`} placement="right" disableHoverListener={open}>
+        <Tooltip title={`Lucky Number: ${luckyNumber.toFixed(1)}`} placement="right" disableHoverListener={open}>
             <Box
                 sx={{
                 minHeight: 48,
@@ -182,7 +182,7 @@ const Sidebar = () => {
                 fontWeight: 'bold'
                 }}
             >
-                {luckyNumber}
+                {luckyNumber.toFixed(1)}
             </Box>
         </Tooltip>
         <Divider />
