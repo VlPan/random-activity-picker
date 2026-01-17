@@ -99,11 +99,11 @@ const Sidebar = () => {
 
   const menuItems = [
     { text: 'Randomizer', icon: <ShuffleIcon />, path: '/randomizer' },
-    { text: 'Projects', icon: <AccountTreeIcon />, path: '/projects' },
     { text: 'Inventory', icon: <InventoryIcon />, path: '/inventory' },
-    { text: 'Statistics', icon: <BarChartIcon />, path: '/statistics' },
+    { text: 'Projects', icon: <AccountTreeIcon />, path: '/projects' },
     { text: 'Bills', icon: <ReceiptIcon />, path: '/bills' },
     { text: 'Shop', icon: <ShoppingCartIcon />, path: '/shop' },
+    { text: 'Statistics', icon: <BarChartIcon />, path: '/statistics' },
     { text: 'History', icon: <HistoryIcon />, path: '/history' },
     { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
   ];
