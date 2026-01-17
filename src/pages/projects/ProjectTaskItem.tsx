@@ -3,7 +3,7 @@ import { Box, Checkbox, Typography, Chip, IconButton } from '@mui/material';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
-import type { ProjectTask, ProjectStatus, Comment } from '../../models/project';
+import type { ProjectTask } from '../../models/project';
 import StatusIndicator from '../../components/projects/StatusIndicator';
 import StatusModal from '../../components/projects/StatusModal';
 
