@@ -1,15 +1,20 @@
+import { useState } from 'react';
 import { Box, Checkbox, Typography, Chip, IconButton } from '@mui/material';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
-import type { ProjectTask } from '../../models/project';
+import type { ProjectTask, ProjectStatus, Comment } from '../../models/project';
+import StatusIndicator from '../../components/projects/StatusIndicator';
+import StatusModal from '../../components/projects/StatusModal';
 
 interface ProjectTaskItemProps {
   task: ProjectTask;
   onComplete: (taskId: string) => void;
+  onUpdate: (task: ProjectTask) => void;
 }
 
-const ProjectTaskItem = ({ task, onComplete }: ProjectTaskItemProps) => {
+const ProjectTaskItem = ({ task, onComplete, onUpdate }: ProjectTaskItemProps) => {
+  const [statusModalOpen, setStatusModalOpen] = useState(false);
   const {
     attributes,
     listeners,
@@ -69,6 +74,14 @@ const ProjectTaskItem = ({ task, onComplete }: ProjectTaskItemProps) => {
         >
           {task.name}
         </Typography>
+        <StatusIndicator 
+            status={task.status} 
+            size={12}
+            onClick={(e) => {
+                e.stopPropagation();
+                setStatusModalOpen(true);
+            }} 
+        />
       </Box>
 
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -79,6 +92,17 @@ const ProjectTaskItem = ({ task, onComplete }: ProjectTaskItemProps) => {
             variant="outlined" 
         />
       </Box>
+      
+      <StatusModal
+        open={statusModalOpen}
+        onClose={() => setStatusModalOpen(false)}
+        title={`Status: ${task.name}`}
+        currentStatus={task.status || 'unset'}
+        comments={task.comments || []}
+        onSave={(status, comments) => {
+            onUpdate({ ...task, status, comments });
+        }}
+      />
     </Box>
   );
 };

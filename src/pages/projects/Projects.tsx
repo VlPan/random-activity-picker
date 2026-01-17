@@ -9,7 +9,7 @@ import ProjectTaskRewardDialog from './ProjectTaskRewardDialog';
 import type { Project, ProjectTask } from '../../models/project';
 
 const Projects = () => {
-  const { projects, addProject, updateProject, deleteProject, completeTask } = useProjectContext();
+  const { projects, addProject, updateProject, deleteProject, completeTask, updateTask } = useProjectContext();
   const { updatePoints } = useUserContext();
   
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -161,9 +161,11 @@ const Projects = () => {
                     key={project.id} 
                     project={project}
                     onEdit={handleEditClick}
+                    onProjectUpdate={updateProject}
                     onDelete={handleDeleteClick}
                     onTaskComplete={(taskId) => handleTaskCompleteClick(project.id, taskId)}
                     onTaskReorder={handleTaskReorder}
+                    onTaskUpdate={updateTask}
                 />
             ))}
         </Box>

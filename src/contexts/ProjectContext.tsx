@@ -41,10 +41,14 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
       name: projectData.name,
       startDate: projectData.startDate,
       endDate: projectData.endDate,
+      status: projectData.status || 'unset',
+      comments: projectData.comments || [],
       tasks: projectData.tasks.map(t => ({
         ...t,
         id: uuidv4(),
-        isCompleted: false
+        isCompleted: false,
+        status: t.status || 'unset',
+        comments: t.comments || []
       }))
     };
     saveProjects([...projects, newProject]);
@@ -62,7 +66,9 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
     const newTask: ProjectTask = {
       ...taskData,
       id: uuidv4(),
-      isCompleted: false
+      isCompleted: false,
+      status: taskData.status || 'unset',
+      comments: taskData.comments || []
     };
     
     saveProjects(projects.map(p => {

@@ -1,3 +1,11 @@
+export type ProjectStatus = 'unset' | 'green' | 'yellow' | 'red';
+
+export interface Comment {
+  id: string;
+  text: string;
+  createdAt: string; // ISO date string
+}
+
 export interface ProjectTask {
   id: string;
   name: string;
@@ -5,6 +13,8 @@ export interface ProjectTask {
   rewardMin: number;
   rewardMax: number;
   completedAt?: string; // ISO date string
+  status?: ProjectStatus;
+  comments?: Comment[];
 }
 
 export interface Project {
@@ -14,4 +24,6 @@ export interface Project {
   endDate: string; // ISO date string (YYYY-MM-DD)
   tasks: ProjectTask[];
   createdAt: string; // ISO date string
+  status?: ProjectStatus;
+  comments?: Comment[];
 }

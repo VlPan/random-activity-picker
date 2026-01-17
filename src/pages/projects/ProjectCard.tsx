@@ -28,25 +28,39 @@ import {
     verticalListSortingStrategy, 
     arrayMove 
 } from '@dnd-kit/sortable';
-import type { Project, ProjectTask } from '../../models/project';
+import type { Project, ProjectTask, ProjectStatus, Comment } from '../../models/project';
 import ProjectTaskItem from './ProjectTaskItem';
+import StatusIndicator from '../../components/projects/StatusIndicator';
+import StatusModal from '../../components/projects/StatusModal';
 import { formatDate } from '../../utils/dateUtils';
 
 interface ProjectCardProps {
     project: Project;
     onDelete: (id: string) => void;
     onEdit: (project: Project) => void;
+    onProjectUpdate: (project: Project) => void;
     onTaskComplete: (taskId: string) => void;
     onTaskReorder: (projectId: string, tasks: ProjectTask[]) => void;
+    onTaskUpdate: (projectId: string, task: ProjectTask) => void;
 }
 
-const ProjectCard = ({ project, onDelete, onEdit, onTaskComplete, onTaskReorder }: ProjectCardProps) => {
+const ProjectCard = ({ project, onDelete, onEdit, onProjectUpdate, onTaskComplete, onTaskReorder, onTaskUpdate }: ProjectCardProps) => {
+    const [statusModalOpen, setStatusModalOpen] = useState(false);
+
     const sensors = useSensors(
         useSensor(PointerSensor),
         useSensor(KeyboardSensor, {
             coordinateGetter: sortableKeyboardCoordinates,
         })
     );
+
+    const handleStatusSave = (status: ProjectStatus, comments: Comment[]) => {
+        onProjectUpdate({
+            ...project,
+            status,
+            comments
+        });
+    };
 
     const handleDragEnd = (event: DragEndEvent) => {
         const { active, over } = event;
@@ -145,9 +159,18 @@ const ProjectCard = ({ project, onDelete, onEdit, onTaskComplete, onTaskReorder 
                     }}
                 >
                     <Box>
-                        <Typography variant="h6" component="div">
-                            {project.name}
-                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Typography variant="h6" component="div">
+                                {project.name}
+                            </Typography>
+                            <StatusIndicator 
+                                status={project.status} 
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setStatusModalOpen(true);
+                                }} 
+                            />
+                        </Box>
                         <Typography variant="caption" color={isOverdue ? 'error.main' : 'text.secondary'}>
                             {formatDate(project.startDate)} - {formatDate(project.endDate)}
                             <Box component="span" sx={{ ml: 1, fontWeight: 'medium' }}>
@@ -198,7 +221,8 @@ const ProjectCard = ({ project, onDelete, onEdit, onTaskComplete, onTaskReorder 
                                     <ProjectTaskItem 
                                         key={task.id} 
                                         task={task} 
-                                        onComplete={onTaskComplete} 
+                                        onComplete={onTaskComplete}
+                                        onUpdate={(updatedTask) => onTaskUpdate(project.id, updatedTask)}
                                     />
                                 ))}
                             </SortableContext>
@@ -206,6 +230,15 @@ const ProjectCard = ({ project, onDelete, onEdit, onTaskComplete, onTaskReorder 
                     </Box>
                 </AccordionDetails>
             </Accordion>
+            
+            <StatusModal
+                open={statusModalOpen}
+                onClose={() => setStatusModalOpen(false)}
+                title={`Status: ${project.name}`}
+                currentStatus={project.status || 'unset'}
+                comments={project.comments || []}
+                onSave={handleStatusSave}
+            />
         </Card>
     );
 };
