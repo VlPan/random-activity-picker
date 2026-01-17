@@ -17,7 +17,7 @@ export interface HistoryItem {
   id: string;
   date: string;
   amount: number;
-  type: 'points' | 'balance';
+  type: 'points' | 'balance' | 'randomPicks';
   reason: string;
   category?: SpendingCategory;
   isEssential?: boolean;
@@ -28,6 +28,7 @@ export interface HistoryItem {
 interface UserContextType {
   balance: number; // ZL
   points: number;  // Points
+  randomPicks: number; // Random Picks (RP)
   luckyNumber: number;
   rewardSettings: RewardSettings;
   history: HistoryItem[];
@@ -35,6 +36,7 @@ interface UserContextType {
   updateBalance: (amount: number, reason?: string, category?: SpendingCategory, isEssential?: boolean) => void;
   updateBalanceWithDate: (amount: number, reason: string, customDate: string, category?: SpendingCategory, isEssential?: boolean) => void;
   updatePoints: (amount: number, reason?: string, count?: number, duration?: number, category?: SpendingCategory) => void;
+  updateRandomPicks: (amount: number, reason?: string) => void;
   exchangePoints: (pointsToExchange: number) => void;
   setLuckyNumber: (num: number) => void;
   updateRewardSettings: (settings: RewardSettings) => void;
@@ -57,6 +59,7 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [balance, setBalance] = useState<number>(0);
   const [points, setPoints] = useState<number>(0);
+  const [randomPicks, setRandomPicks] = useState<number>(0);
   const [luckyNumber, setLuckyNumberState] = useState<number>(2);
   const [rewardSettings, setRewardSettings] = useState<RewardSettings>(defaultRewardSettings);
   const [history, setHistory] = useState<HistoryItem[]>([]);
@@ -65,6 +68,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const storedBalance = localStorage.getItem('userBalance');
     const storedPoints = localStorage.getItem('userPoints');
+    const storedRandomPicks = localStorage.getItem('userRandomPicks');
     const storedLuckyNumber = localStorage.getItem('luckyNumber');
     const storedSettings = localStorage.getItem('rewardSettings');
     const storedHistory = localStorage.getItem('userHistory');
@@ -75,6 +79,9 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     }
     if (storedPoints) {
       setPoints(Number(storedPoints));
+    }
+    if (storedRandomPicks) {
+      setRandomPicks(Number(storedRandomPicks));
     }
     if (storedLuckyNumber) {
       setLuckyNumberState(Number(storedLuckyNumber));
@@ -98,7 +105,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
-  const addHistoryItem = (amount: number, type: 'points' | 'balance', reason: string, count?: number, duration?: number, category?: SpendingCategory, isEssential?: boolean) => {
+  const addHistoryItem = (amount: number, type: 'points' | 'balance' | 'randomPicks', reason: string, count?: number, duration?: number, category?: SpendingCategory, isEssential?: boolean) => {
     const newItem: HistoryItem = {
         id: crypto.randomUUID(),
         date: new Date().toISOString(),
@@ -118,7 +125,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
-  const addHistoryItemWithDate = (amount: number, type: 'points' | 'balance', reason: string, customDate: string, category?: SpendingCategory, isEssential?: boolean) => {
+  const addHistoryItemWithDate = (amount: number, type: 'points' | 'balance' | 'randomPicks', reason: string, customDate: string, category?: SpendingCategory, isEssential?: boolean) => {
     const newItem: HistoryItem = {
         id: crypto.randomUUID(),
         date: customDate,
@@ -161,6 +168,15 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       return newPoints;
     });
     addHistoryItem(amount, 'points', reason, count, duration, category);
+  };
+
+  const updateRandomPicks = (amount: number, reason: string = 'Manual Adjustment') => {
+    setRandomPicks((prev) => {
+      const newPicks = Math.max(0, prev + amount); // Ensure non-negative
+      localStorage.setItem('userRandomPicks', newPicks.toString());
+      return newPicks;
+    });
+    addHistoryItem(amount, 'randomPicks', reason);
   };
 
   const exchangePoints = (pointsToExchange: number) => {
@@ -207,6 +223,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const value = {
     balance,
     points,
+    randomPicks,
     luckyNumber,
     rewardSettings,
     history,
@@ -214,6 +231,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     updateBalance,
     updateBalanceWithDate,
     updatePoints,
+    updateRandomPicks,
     exchangePoints,
     setLuckyNumber,
     updateRewardSettings,

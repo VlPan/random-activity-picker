@@ -18,6 +18,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import DeleteSweepIcon from '@mui/icons-material/DeleteSweep';
 import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
 import StarIcon from '@mui/icons-material/Star';
+import ShuffleIcon from '@mui/icons-material/Shuffle';
 import { useMemo } from 'react';
 import { formatDateTime } from '../../utils/dateUtils';
 
@@ -60,8 +61,8 @@ const History = () => {
       {items.map((item) => (
         <ListItem key={item.id} divider>
           <ListItemAvatar>
-            <Avatar sx={{ bgcolor: item.type === 'points' ? 'secondary.main' : 'success.main' }}>
-              {item.type === 'points' ? <StarIcon /> : <MonetizationOnIcon />}
+            <Avatar sx={{ bgcolor: item.type === 'points' ? 'secondary.main' : item.type === 'balance' ? 'success.main' : 'info.main' }}>
+              {item.type === 'points' ? <StarIcon /> : item.type === 'balance' ? <MonetizationOnIcon /> : <ShuffleIcon />}
             </Avatar>
           </ListItemAvatar>
           <ListItemText 
@@ -96,7 +97,7 @@ const History = () => {
                     fontWeight: 'bold'
                 }}
             >
-                {item.amount > 0 ? '+' : ''}{item.amount} {item.type === 'points' ? 'P' : 'ZL'}
+                {item.amount > 0 ? '+' : ''}{item.amount} {item.type === 'points' ? 'P' : item.type === 'balance' ? 'ZL' : 'RP'}
             </Typography>
           </Box>
         </ListItem>
