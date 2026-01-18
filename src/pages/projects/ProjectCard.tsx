@@ -54,12 +54,12 @@ const ProjectCard = ({ project, onDelete, onEdit, onProjectUpdate, onTaskComplet
         })
     );
 
-    const handleStatusSave = (status: ProjectStatus, comments: Comment[], isImportant: boolean) => {
+    const handleStatusSave = (status: ProjectStatus, comments: Comment[], isImportant?: boolean) => {
         onProjectUpdate({
             ...project,
             status,
             comments,
-            isImportant
+            isImportant: isImportant ?? project.isImportant ?? false
         });
     };
 

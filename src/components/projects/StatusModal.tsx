@@ -34,27 +34,29 @@ interface StatusModalProps {
   title: string;
   currentStatus: ProjectStatus;
   comments: Comment[];
-  isImportant: boolean;
+  isImportant?: boolean;
   projectId?: string; // To exclude current project from limit check
-  onSave: (status: ProjectStatus, comments: Comment[], isImportant: boolean) => void;
+  onSave: (status: ProjectStatus, comments: Comment[], isImportant?: boolean) => void;
 }
 
 const StatusModal = ({ open, onClose, title, currentStatus, comments, isImportant, projectId, onSave }: StatusModalProps) => {
   const [status, setStatus] = useState<ProjectStatus>(currentStatus);
   const [localComments, setLocalComments] = useState<Comment[]>(comments);
-  const [localIsImportant, setLocalIsImportant] = useState<boolean>(isImportant);
+  const [localIsImportant, setLocalIsImportant] = useState<boolean>(isImportant ?? false);
   const [newComment, setNewComment] = useState('');
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editingCommentText, setEditingCommentText] = useState('');
   const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
   const [activeCommentId, setActiveCommentId] = useState<string | null>(null);
   const { projects } = useProjectContext();
+  
+  const showImportantOption = isImportant !== undefined;
 
   useEffect(() => {
     if (open) {
       setStatus(currentStatus);
       setLocalComments(comments || []); // Ensure comments is array
-      setLocalIsImportant(isImportant);
+      setLocalIsImportant(isImportant ?? false);
       setNewComment('');
       setEditingCommentId(null);
     }
@@ -74,7 +76,7 @@ const StatusModal = ({ open, onClose, title, currentStatus, comments, isImportan
     setNewComment('');
     
     // Save the comment immediately
-    onSave(status, updatedComments, localIsImportant);
+    onSave(status, updatedComments, showImportantOption ? localIsImportant : undefined);
   };
 
   const handleDeleteComment = (id: string) => {
@@ -82,7 +84,7 @@ const StatusModal = ({ open, onClose, title, currentStatus, comments, isImportan
     setLocalComments(updatedComments);
     
     // Save the deletion immediately
-    onSave(status, updatedComments, localIsImportant);
+    onSave(status, updatedComments, showImportantOption ? localIsImportant : undefined);
   };
 
   const handleStartEditComment = (comment: Comment) => {
@@ -103,7 +105,7 @@ const StatusModal = ({ open, onClose, title, currentStatus, comments, isImportan
     setEditingCommentText('');
     
     // Save the edited comment immediately
-    onSave(status, updatedComments, localIsImportant);
+    onSave(status, updatedComments, showImportantOption ? localIsImportant : undefined);
   };
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, commentId: string) => {
@@ -135,7 +137,7 @@ const StatusModal = ({ open, onClose, title, currentStatus, comments, isImportan
   };
 
   const handleSave = () => {
-    onSave(status, localComments, localIsImportant);
+    onSave(status, localComments, showImportantOption ? localIsImportant : undefined);
     onClose();
   };
 
@@ -176,22 +178,24 @@ const StatusModal = ({ open, onClose, title, currentStatus, comments, isImportan
             </ToggleButtonGroup>
         </Box>
 
-        <Box sx={{ mb: 3 }}>
-            <FormControlLabel
-                control={
-                    <Checkbox
-                        checked={localIsImportant}
-                        onChange={handleToggleImportant}
-                    />
-                }
-                label="Mark as important"
-            />
-            {localIsImportant && (
-                <Alert severity="info" sx={{ mt: 1 }}>
-                    Important projects are displayed at the top of the list. You can mark up to 3 projects as important.
-                </Alert>
-            )}
-        </Box>
+        {showImportantOption && (
+            <Box sx={{ mb: 3 }}>
+                <FormControlLabel
+                    control={
+                        <Checkbox
+                            checked={localIsImportant}
+                            onChange={handleToggleImportant}
+                        />
+                    }
+                    label="Mark as important"
+                />
+                {localIsImportant && (
+                    <Alert severity="info" sx={{ mt: 1 }}>
+                        Important projects are displayed at the top of the list. You can mark up to 3 projects as important.
+                    </Alert>
+                )}
+            </Box>
+        )}
 
         <Box sx={{ mb: 2 }}>
             <Typography variant="subtitle2" gutterBottom>Comments</Typography>
