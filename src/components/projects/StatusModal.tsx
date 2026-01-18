@@ -161,7 +161,7 @@ const StatusModal = ({ open, onClose, title, currentStatus, comments, onSave }: 
                         No comments yet
                     </Typography>
                 )}
-                {localComments.map((comment) => (
+                {[...localComments].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map((comment) => (
                     <ListItem
                         key={comment.id}
                         alignItems="flex-start"

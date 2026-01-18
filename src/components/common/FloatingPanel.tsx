@@ -11,9 +11,10 @@ interface FloatingPanelProps {
   defaultExpanded?: boolean;
   width?: number | string;
   action?: ReactNode;
+  headerColor?: string;
 }
 
-export const FloatingPanel = ({ title, children, defaultExpanded = true, width = 300, action }: FloatingPanelProps) => {
+export const FloatingPanel = ({ title, children, defaultExpanded = true, width = 300, action, headerColor }: FloatingPanelProps) => {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
   const { sidebarWidth, isSidebarOpen } = useLayoutContext();
   const theme = useTheme();
@@ -47,7 +48,7 @@ export const FloatingPanel = ({ title, children, defaultExpanded = true, width =
           alignItems: 'center',
           justifyContent: 'space-between',
           cursor: 'pointer',
-          bgcolor: 'primary.main',
+          bgcolor: headerColor || 'primary.main',
           color: 'primary.contrastText',
         }}
         onClick={() => setIsExpanded(!isExpanded)}

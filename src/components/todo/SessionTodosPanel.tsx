@@ -15,6 +15,7 @@ export const SessionTodosPanel = () => {
     clearTodos, 
     resetTodoTime, 
     activeTaskId, 
+    isPaused,
     pauseTimer, 
     resumeTimer, 
     completeTask 
@@ -23,6 +24,18 @@ export const SessionTodosPanel = () => {
   const [isRewardDialogOpen, setIsRewardDialogOpen] = useState(false);
   const [completedTaskId, setCompletedTaskId] = useState<string | null>(null);
   const [confirmClearDialogOpen, setConfirmClearDialogOpen] = useState(false);
+
+  // Sort todos so active todo is always first
+  const sortedTodos = [...todoItems].sort((a, b) => {
+    if (a.id === activeTaskId) return -1;
+    if (b.id === activeTaskId) return 1;
+    return 0;
+  });
+
+  // Determine header color based on active todo status
+  const headerColor = activeTaskId 
+    ? (isPaused ? 'warning.main' : 'success.main')
+    : 'primary.main';
 
   const handleToggleTodo = (id: string) => {
     const item = todoItems.find(i => i.id === id);
@@ -59,6 +72,7 @@ export const SessionTodosPanel = () => {
       <FloatingPanel 
         title="Session Todos" 
         width={400}
+        headerColor={headerColor}
         action={
           <Tooltip title="Clear all todos">
             <IconButton size="small" onClick={handleClearTodos} color="inherit">
@@ -68,7 +82,7 @@ export const SessionTodosPanel = () => {
         }
       >
         <TodoList
-          items={todoItems}
+          items={sortedTodos}
           onToggleComplete={handleToggleTodo}
           onDelete={handleDeleteTodo}
         />
