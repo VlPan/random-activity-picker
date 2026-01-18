@@ -157,6 +157,18 @@ const Projects = () => {
       ) : (
         <Box sx={{ display: 'flex', flexDirection: 'column' }}>
             {[...projects].sort((a, b) => {
+                // First, sort by status: unset projects go to the bottom
+                const statusA = a.status || 'unset';
+                const statusB = b.status || 'unset';
+                const isUnsetA = statusA === 'unset';
+                const isUnsetB = statusB === 'unset';
+                
+                // If one is unset and the other isn't, unset goes to bottom
+                if (isUnsetA && !isUnsetB) return 1;
+                if (!isUnsetA && isUnsetB) return -1;
+                
+                // If both have the same status category (both unset or both not unset),
+                // sort by days left
                 const daysLeftA = Math.ceil((new Date(a.endDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
                 const daysLeftB = Math.ceil((new Date(b.endDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
                 return daysLeftA - daysLeftB;
