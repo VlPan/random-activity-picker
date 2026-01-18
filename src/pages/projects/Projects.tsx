@@ -156,7 +156,11 @@ const Projects = () => {
         </Typography>
       ) : (
         <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-            {projects.map(project => (
+            {[...projects].sort((a, b) => {
+                const daysLeftA = Math.ceil((new Date(a.endDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+                const daysLeftB = Math.ceil((new Date(b.endDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+                return daysLeftA - daysLeftB;
+            }).map(project => (
                 <ProjectCard 
                     key={project.id} 
                     project={project}
