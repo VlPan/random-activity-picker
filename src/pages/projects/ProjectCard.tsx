@@ -54,11 +54,12 @@ const ProjectCard = ({ project, onDelete, onEdit, onProjectUpdate, onTaskComplet
         })
     );
 
-    const handleStatusSave = (status: ProjectStatus, comments: Comment[]) => {
+    const handleStatusSave = (status: ProjectStatus, comments: Comment[], isImportant: boolean) => {
         onProjectUpdate({
             ...project,
             status,
-            comments
+            comments,
+            isImportant
         });
     };
 
@@ -117,7 +118,17 @@ const ProjectCard = ({ project, onDelete, onEdit, onProjectUpdate, onTaskComplet
     };
 
     return (
-        <Card sx={{ mb: 2, position: 'relative', overflow: 'visible' }}>
+        <Card sx={{ 
+            mb: 2, 
+            position: 'relative', 
+            overflow: 'visible',
+            ...(project.isImportant && {
+                borderBottom: '4px solid',
+                borderBottomColor: '#9c27b0',
+                bgcolor: 'rgba(156, 39, 176, 0.05)',
+                boxShadow: 3
+            })
+        }}>
             <Box sx={{ position: 'relative', display: 'flex', flexDirection: 'column' }}>
                 {/* Completion Progress (Green) */}
                 <LinearProgress 
@@ -237,6 +248,8 @@ const ProjectCard = ({ project, onDelete, onEdit, onProjectUpdate, onTaskComplet
                 title={`Status: ${project.name}`}
                 currentStatus={project.status || 'unset'}
                 comments={project.comments || []}
+                isImportant={project.isImportant || false}
+                projectId={project.id}
                 onSave={handleStatusSave}
             />
         </Card>

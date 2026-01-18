@@ -157,7 +157,14 @@ const Projects = () => {
       ) : (
         <Box sx={{ display: 'flex', flexDirection: 'column' }}>
             {[...projects].sort((a, b) => {
-                // First, sort by status: unset projects go to the bottom
+                // First, sort by important status: important projects go to the top
+                const isImportantA = a.isImportant || false;
+                const isImportantB = b.isImportant || false;
+                
+                if (isImportantA && !isImportantB) return -1;
+                if (!isImportantA && isImportantB) return 1;
+                
+                // If both have the same important status, sort by status: unset projects go to the bottom
                 const statusA = a.status || 'unset';
                 const statusB = b.status || 'unset';
                 const isUnsetA = statusA === 'unset';

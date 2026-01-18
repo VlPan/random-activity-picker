@@ -43,6 +43,7 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
       endDate: projectData.endDate,
       status: projectData.status || 'unset',
       comments: projectData.comments || [],
+      isImportant: projectData.isImportant || false,
       tasks: projectData.tasks.map(t => ({
         ...t,
         id: uuidv4(),

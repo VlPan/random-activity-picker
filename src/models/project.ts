@@ -26,4 +26,5 @@ export interface Project {
   createdAt: string; // ISO date string
   status?: ProjectStatus;
   comments?: Comment[];
+  isImportant?: boolean;
 }

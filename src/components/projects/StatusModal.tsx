@@ -15,7 +15,10 @@ import {
   ToggleButton,
   ToggleButtonGroup,
   Menu,
-  MenuItem
+  MenuItem,
+  FormControlLabel,
+  Checkbox,
+  Alert
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
@@ -23,6 +26,7 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { v4 as uuidv4 } from 'uuid';
 import type { ProjectStatus, Comment } from '../../models/project';
 import StatusIndicator from './StatusIndicator';
+import { useProjectContext } from '../../contexts/ProjectContext';
 
 interface StatusModalProps {
   open: boolean;
@@ -30,26 +34,31 @@ interface StatusModalProps {
   title: string;
   currentStatus: ProjectStatus;
   comments: Comment[];
-  onSave: (status: ProjectStatus, comments: Comment[]) => void;
+  isImportant: boolean;
+  projectId?: string; // To exclude current project from limit check
+  onSave: (status: ProjectStatus, comments: Comment[], isImportant: boolean) => void;
 }
 
-const StatusModal = ({ open, onClose, title, currentStatus, comments, onSave }: StatusModalProps) => {
+const StatusModal = ({ open, onClose, title, currentStatus, comments, isImportant, projectId, onSave }: StatusModalProps) => {
   const [status, setStatus] = useState<ProjectStatus>(currentStatus);
   const [localComments, setLocalComments] = useState<Comment[]>(comments);
+  const [localIsImportant, setLocalIsImportant] = useState<boolean>(isImportant);
   const [newComment, setNewComment] = useState('');
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editingCommentText, setEditingCommentText] = useState('');
   const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
   const [activeCommentId, setActiveCommentId] = useState<string | null>(null);
+  const { projects } = useProjectContext();
 
   useEffect(() => {
     if (open) {
       setStatus(currentStatus);
       setLocalComments(comments || []); // Ensure comments is array
+      setLocalIsImportant(isImportant);
       setNewComment('');
       setEditingCommentId(null);
     }
-  }, [open, currentStatus, comments]);
+  }, [open, currentStatus, comments, isImportant]);
 
   const handleAddComment = () => {
     if (!newComment.trim()) return;
@@ -65,7 +74,7 @@ const StatusModal = ({ open, onClose, title, currentStatus, comments, onSave }: 
     setNewComment('');
     
     // Save the comment immediately
-    onSave(status, updatedComments);
+    onSave(status, updatedComments, localIsImportant);
   };
 
   const handleDeleteComment = (id: string) => {
@@ -73,7 +82,7 @@ const StatusModal = ({ open, onClose, title, currentStatus, comments, onSave }: 
     setLocalComments(updatedComments);
     
     // Save the deletion immediately
-    onSave(status, updatedComments);
+    onSave(status, updatedComments, localIsImportant);
   };
 
   const handleStartEditComment = (comment: Comment) => {
@@ -94,7 +103,7 @@ const StatusModal = ({ open, onClose, title, currentStatus, comments, onSave }: 
     setEditingCommentText('');
     
     // Save the edited comment immediately
-    onSave(status, updatedComments);
+    onSave(status, updatedComments, localIsImportant);
   };
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, commentId: string) => {
@@ -107,8 +116,26 @@ const StatusModal = ({ open, onClose, title, currentStatus, comments, onSave }: 
     setActiveCommentId(null);
   };
 
+  const handleToggleImportant = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const newIsImportant = event.target.checked;
+    
+    // If trying to mark as important, check if we're at the limit
+    if (newIsImportant) {
+      const importantCount = projects.filter((p) => {
+        const isImportant = 'isImportant' in p ? p.isImportant : false;
+        return isImportant === true && p.id !== projectId;
+      }).length;
+      if (importantCount >= 3) {
+        alert('You can only mark up to 3 projects as important. Please unmark another project first.');
+        return;
+      }
+    }
+    
+    setLocalIsImportant(newIsImportant);
+  };
+
   const handleSave = () => {
-    onSave(status, localComments);
+    onSave(status, localComments, localIsImportant);
     onClose();
   };
 
@@ -147,6 +174,23 @@ const StatusModal = ({ open, onClose, title, currentStatus, comments, onSave }: 
                     </Box>
                 </ToggleButton>
             </ToggleButtonGroup>
+        </Box>
+
+        <Box sx={{ mb: 3 }}>
+            <FormControlLabel
+                control={
+                    <Checkbox
+                        checked={localIsImportant}
+                        onChange={handleToggleImportant}
+                    />
+                }
+                label="Mark as important"
+            />
+            {localIsImportant && (
+                <Alert severity="info" sx={{ mt: 1 }}>
+                    Important projects are displayed at the top of the list. You can mark up to 3 projects as important.
+                </Alert>
+            )}
         </Box>
 
         <Box sx={{ mb: 2 }}>
