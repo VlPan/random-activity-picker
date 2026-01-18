@@ -5,7 +5,8 @@ export const useAnketCheck = () => {
   const { 
     lastAnketDate, 
     setLastAnketDate, 
-    updateBalanceWithDate, 
+    updateBalanceWithDate,
+    updateRandomPicksWithDate,
     rewardSettings 
   } = useUserContext();
   
@@ -78,22 +79,30 @@ export const useAnketCheck = () => {
     return cost * (1 - discount / 100);
   }, [rewardSettings.basicNecessityDiscount]);
 
-  const handleSubmit = useCallback((basicSpending: number, nonEssentialSpending: number) => {
+  const handleSubmit = useCallback((basicSpending: number, nonEssentialSpending: number, parameterValues: Record<string, number>) => {
     const currentDay = missingDays[currentDayIndex];
     if (!currentDay) return;
 
     const dateIso = getDateISOString(currentDay);
     const dateKey = getDateKey(currentDay);
 
+    // Process Parameters (Add Random Picks)
+    Object.entries(parameterValues).forEach(([paramId, value]) => {
+        const paramDef = rewardSettings.dailyReportParameters?.find(p => p.id === paramId);
+        if (paramDef && value > 0) {
+            updateRandomPicksWithDate(value, `Daily Report: ${paramDef.name}`, dateIso, 'Daily Report');
+        }
+    });
+
     // Process Basic Spending (with discount)
     if (basicSpending > 0) {
       const discountedAmount = calculateDiscountedCost(basicSpending);
-      updateBalanceWithDate(-discountedAmount, 'Bill Payment: Daily Anket - Basics', dateIso, 'Anket', true);
+      updateBalanceWithDate(-discountedAmount, 'Bill Payment: Daily Report - Basics', dateIso, 'Daily Report', true);
     }
 
     // Process Non-Essential Spending (no discount)
     if (nonEssentialSpending > 0) {
-      updateBalanceWithDate(-nonEssentialSpending, 'Bill Payment: Daily Anket - Non-Essential', dateIso, 'Anket', false);
+      updateBalanceWithDate(-nonEssentialSpending, 'Bill Payment: Daily Report - Non-Essential', dateIso, 'Daily Report', false);
     }
 
     // Update lastAnketDate to current day
@@ -108,7 +117,7 @@ export const useAnketCheck = () => {
       setShowAnket(false);
       setCurrentDayIndex(0);
     }
-  }, [missingDays, currentDayIndex, calculateDiscountedCost, updateBalanceWithDate, setLastAnketDate]);
+  }, [missingDays, currentDayIndex, calculateDiscountedCost, updateBalanceWithDate, updateRandomPicksWithDate, setLastAnketDate, rewardSettings.dailyReportParameters]);
 
   const handleSkipAll = useCallback(() => {
     // Skip all remaining days by setting lastAnketDate to yesterday

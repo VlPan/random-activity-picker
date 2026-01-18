@@ -9,6 +9,7 @@ import {
   Box,
   Typography,
   Alert,
+  Divider,
 } from '@mui/material';
 import { ConfirmationDialog } from '../common/ConfirmationDialog';
 import { useUserContext } from '../../contexts/UserContext';
@@ -18,7 +19,7 @@ interface DailyAnketDialogProps {
   open: boolean;
   missingDays: Date[];
   currentDayIndex: number;
-  onSubmit: (basicSpending: number, nonEssentialSpending: number) => void;
+  onSubmit: (basicSpending: number, nonEssentialSpending: number, parameterValues: Record<string, number>) => void;
   onSkipAll: () => void;
   dayNumber?: number;
   totalDaysCount?: number;
@@ -36,6 +37,7 @@ export const DailyAnketDialog: React.FC<DailyAnketDialogProps> = ({
   const { rewardSettings } = useUserContext();
   const [basicSpending, setBasicSpending] = useState<string>('');
   const [nonEssentialSpending, setNonEssentialSpending] = useState<string>('');
+  const [paramValues, setParamValues] = useState<Record<string, string>>({});
   const [skipAllConfirmOpen, setSkipAllConfirmOpen] = useState(false);
 
   const currentDay = missingDays[currentDayIndex];
@@ -55,10 +57,20 @@ export const DailyAnketDialog: React.FC<DailyAnketDialogProps> = ({
   const handleSubmit = () => {
     const basic = parseFloat(basicSpending) || 0;
     const nonEssential = parseFloat(nonEssentialSpending) || 0;
-    onSubmit(basic, nonEssential);
+    
+    const numericParams: Record<string, number> = {};
+    Object.entries(paramValues).forEach(([key, val]) => {
+        const num = parseFloat(val);
+        if (!isNaN(num) && num > 0) {
+            numericParams[key] = num;
+        }
+    });
+
+    onSubmit(basic, nonEssential, numericParams);
     // Reset fields for next day
     setBasicSpending('');
     setNonEssentialSpending('');
+    setParamValues({});
   };
 
   const handleSkipAllClick = () => {
@@ -81,7 +93,7 @@ export const DailyAnketDialog: React.FC<DailyAnketDialogProps> = ({
     <>
       <Dialog open={open} maxWidth="sm" fullWidth>
         <DialogTitle>
-          Daily Spending Report
+          Daily Report
           {displayTotal > 1 && (
             <Typography variant="subtitle2" color="text.secondary">
               Day {displayCurrent} of {displayTotal}
@@ -90,17 +102,47 @@ export const DailyAnketDialog: React.FC<DailyAnketDialogProps> = ({
         </DialogTitle>
         <DialogContent>
           <Alert severity="info" sx={{ mb: 3 }}>
-            Please enter your spending for <strong>{formatDate(currentDay)}</strong>
+            Please enter your data for <strong>{formatDate(currentDay)}</strong>
           </Alert>
 
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            
+            {(rewardSettings.dailyReportParameters || []).length > 0 && (
+                <Box>
+                    <Typography variant="subtitle2" gutterBottom sx={{ color: 'text.secondary' }}>
+                        Parameters (Adds Random Picks)
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        {(rewardSettings.dailyReportParameters || []).map(param => (
+                           <TextField
+                             key={param.id}
+                             label={param.name}
+                             type="number"
+                             value={paramValues[param.id] || ''}
+                             onChange={(e) => setParamValues({...paramValues, [param.id]: e.target.value})}
+                             fullWidth
+                             helperText={param.description}
+                             inputProps={{ min: 0 }}
+                           />
+                        ))}
+                    </Box>
+                    <Divider sx={{ my: 2 }} />
+                </Box>
+            )}
+
+            {(rewardSettings.dailyReportParameters || []).length > 0 && (
+               <Typography variant="subtitle2" sx={{ color: 'text.secondary', mb: -2 }}>
+                  Spending (Deducts Balance)
+               </Typography>
+            )}
+
             <TextField
               label="Basic Spending (ZL)"
               type="number"
               value={basicSpending}
               onChange={(e) => setBasicSpending(e.target.value)}
               fullWidth
-              autoFocus
+              autoFocus={(rewardSettings.dailyReportParameters || []).length === 0}
               helperText={
                 basicValue > 0
                   ? `After ${rewardSettings.basicNecessityDiscount || 0}% discount: ${discountedBasic.toFixed(2)} ZL`

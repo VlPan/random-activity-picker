@@ -1,8 +1,36 @@
-import { Box, Typography, Slider, Paper, TextField, Divider, Stack } from '@mui/material';
+import { Box, Typography, Slider, Paper, TextField, Divider, Stack, Button, List, ListItem, ListItemText, IconButton } from '@mui/material';
+import DeleteIcon from '@mui/icons-material/Delete';
+import AddIcon from '@mui/icons-material/Add';
 import { useUserContext } from '../../contexts/UserContext';
+import { useState } from 'react';
 
 const Settings = () => {
   const { luckyNumber, setLuckyNumber, rewardSettings, updateRewardSettings } = useUserContext();
+  const [newParamName, setNewParamName] = useState('');
+  const [newParamDesc, setNewParamDesc] = useState('');
+
+  const handleAddParameter = () => {
+    if (newParamName.trim()) {
+      const newParam = {
+        id: crypto.randomUUID(),
+        name: newParamName.trim(),
+        description: newParamDesc.trim()
+      };
+      updateRewardSettings({
+        ...rewardSettings,
+        dailyReportParameters: [...(rewardSettings.dailyReportParameters || []), newParam]
+      });
+      setNewParamName('');
+      setNewParamDesc('');
+    }
+  };
+
+  const handleDeleteParameter = (id: string) => {
+    updateRewardSettings({
+      ...rewardSettings,
+      dailyReportParameters: (rewardSettings.dailyReportParameters || []).filter(p => p.id !== id)
+    });
+  };
 
   const handleSliderChange = (_event: Event, newValue: number | number[]) => {
     setLuckyNumber(newValue as number);
@@ -95,6 +123,58 @@ const Settings = () => {
               />
             </Box>
         </Stack>
+      </Paper>
+
+      <Paper sx={{ p: 4, mb: 3 }}>
+        <Typography variant="h6" gutterBottom>
+          Daily Report Configuration
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>
+          Add parameters to be tracked in your Daily Report. These will add Random Picks based on your input.
+        </Typography>
+
+        <List>
+          {(rewardSettings.dailyReportParameters || []).map((param) => (
+            <ListItem
+              key={param.id}
+              secondaryAction={
+                <IconButton edge="end" aria-label="delete" onClick={() => handleDeleteParameter(param.id)}>
+                  <DeleteIcon />
+                </IconButton>
+              }
+            >
+              <ListItemText
+                primary={param.name}
+                secondary={param.description}
+              />
+            </ListItem>
+          ))}
+        </List>
+
+        <Box sx={{ display: 'flex', gap: 2, mt: 2, alignItems: 'flex-start' }}>
+          <TextField
+            label="Parameter Name"
+            value={newParamName}
+            onChange={(e) => setNewParamName(e.target.value)}
+            size="small"
+            sx={{ flex: 1 }}
+          />
+          <TextField
+            label="Description (optional)"
+            value={newParamDesc}
+            onChange={(e) => setNewParamDesc(e.target.value)}
+            size="small"
+            sx={{ flex: 2 }}
+          />
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={handleAddParameter}
+            disabled={!newParamName.trim()}
+          >
+            Add
+          </Button>
+        </Box>
       </Paper>
 
       <Paper sx={{ p: 4 }}>

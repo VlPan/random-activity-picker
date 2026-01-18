@@ -9,9 +9,16 @@ interface RewardSettings {
   progressiveInterval: number;
   conversionRate: number; // Points per 1 ZL
   basicNecessityDiscount: number; // Percentage discount (0-100)
+  dailyReportParameters: DailyReportParameter[];
 }
 
-export type SpendingCategory = 'Manual' | 'Bill' | 'Anket' | 'Shop' | 'Project' | 'Other';
+export interface DailyReportParameter {
+  id: string;
+  name: string;
+  description: string;
+}
+
+export type SpendingCategory = 'Manual' | 'Bill' | 'Anket' | 'Daily Report' | 'Shop' | 'Project' | 'Other';
 
 export interface HistoryItem {
   id: string;
@@ -37,6 +44,7 @@ interface UserContextType {
   updateBalanceWithDate: (amount: number, reason: string, customDate: string, category?: SpendingCategory, isEssential?: boolean) => void;
   updatePoints: (amount: number, reason?: string, count?: number, duration?: number, category?: SpendingCategory) => void;
   updateRandomPicks: (amount: number, reason?: string) => void;
+  updateRandomPicksWithDate: (amount: number, reason: string, customDate: string, category?: SpendingCategory) => void;
   exchangePoints: (pointsToExchange: number) => void;
   setLuckyNumber: (num: number) => void;
   updateRewardSettings: (settings: RewardSettings) => void;
@@ -51,7 +59,8 @@ const defaultRewardSettings: RewardSettings = {
   maxPoints: 1,
   progressiveInterval: 30,
   conversionRate: 100,
-  basicNecessityDiscount: 0
+  basicNecessityDiscount: 0,
+  dailyReportParameters: []
 };
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -179,6 +188,15 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     addHistoryItem(amount, 'randomPicks', reason);
   };
 
+  const updateRandomPicksWithDate = (amount: number, reason: string, customDate: string, category?: SpendingCategory) => {
+    setRandomPicks((prev) => {
+      const newPicks = Math.max(0, prev + amount);
+      localStorage.setItem('userRandomPicks', newPicks.toString());
+      return newPicks;
+    });
+    addHistoryItemWithDate(amount, 'randomPicks', reason, customDate, category);
+  };
+
   const exchangePoints = (pointsToExchange: number) => {
     if (pointsToExchange <= 0) return;
     if (points < pointsToExchange) return;
@@ -232,6 +250,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     updateBalanceWithDate,
     updatePoints,
     updateRandomPicks,
+    updateRandomPicksWithDate,
     exchangePoints,
     setLuckyNumber,
     updateRewardSettings,
