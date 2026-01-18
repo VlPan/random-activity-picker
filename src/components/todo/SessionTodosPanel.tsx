@@ -1,6 +1,9 @@
 import { useState } from 'react';
-import { IconButton, Tooltip } from '@mui/material';
+import { IconButton, Tooltip, Box } from '@mui/material';
 import DeleteSweepIcon from '@mui/icons-material/DeleteSweep';
+import PauseIcon from '@mui/icons-material/Pause';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import CheckIcon from '@mui/icons-material/Check';
 import { useTodoContext } from '../../contexts/TodoContext';
 import { FloatingPanel } from '../common/FloatingPanel';
 import { ConfirmationDialog } from '../common/ConfirmationDialog';
@@ -31,6 +34,12 @@ export const SessionTodosPanel = () => {
     if (b.id === activeTaskId) return 1;
     return 0;
   });
+
+  // Get active task
+  const activeTask = activeTaskId ? todoItems.find(i => i.id === activeTaskId) : null;
+
+  // Determine header title based on active task
+  const headerTitle = activeTask ? activeTask.displayName : 'Session Todos';
 
   // Determine header color based on active todo status
   const headerColor = activeTaskId 
@@ -63,23 +72,65 @@ export const SessionTodosPanel = () => {
     setConfirmClearDialogOpen(false);
   };
 
+  const handlePauseFromHeader = () => {
+    if (activeTaskId) {
+      pauseTimer();
+    }
+  };
+
+  const handleResumeFromHeader = () => {
+    if (activeTaskId) {
+      resumeTimer();
+    }
+  };
+
+  const handleCompleteFromHeader = () => {
+    if (activeTaskId && activeTask) {
+      handleToggleTodo(activeTaskId);
+    }
+  };
+
   if (todoItems.length === 0) {
     return null;
   }
 
+  // Determine action buttons based on whether task is active
+  const headerAction = activeTaskId ? (
+    <Box sx={{ display: 'flex', gap: 0.5 }}>
+      {isPaused ? (
+        <Tooltip title="Resume">
+          <IconButton size="small" onClick={handleResumeFromHeader} color="inherit">
+            <PlayArrowIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      ) : (
+        <Tooltip title="Pause">
+          <IconButton size="small" onClick={handlePauseFromHeader} color="inherit">
+            <PauseIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      )}
+      <Tooltip title="Complete">
+        <IconButton size="small" onClick={handleCompleteFromHeader} color="inherit">
+          <CheckIcon fontSize="small" />
+        </IconButton>
+      </Tooltip>
+    </Box>
+  ) : (
+    <Tooltip title="Clear all todos">
+      <IconButton size="small" onClick={handleClearTodos} color="inherit">
+        <DeleteSweepIcon fontSize="small" />
+      </IconButton>
+    </Tooltip>
+  );
+
   return (
     <>
       <FloatingPanel 
-        title="Session Todos" 
+        title={headerTitle}
         width={400}
         headerColor={headerColor}
-        action={
-          <Tooltip title="Clear all todos">
-            <IconButton size="small" onClick={handleClearTodos} color="inherit">
-              <DeleteSweepIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        }
+        action={headerAction}
       >
         <TodoList
           items={sortedTodos}

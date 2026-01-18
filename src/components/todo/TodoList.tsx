@@ -245,10 +245,13 @@ export const TodoList = ({ items, onToggleComplete, onDelete }: TodoListProps) =
           </MenuItem>
         )}
 
-        <MenuItem onClick={() => { 
-          if(menuAnchor) onDelete(menuAnchor.itemId); 
-          handleMenuClose(); 
-        }}>
+        <MenuItem 
+          onClick={() => { 
+            if(menuAnchor) onDelete(menuAnchor.itemId); 
+            handleMenuClose(); 
+          }}
+          disabled={isMenuItemActive}
+        >
           <ListItemIcon><DeleteIcon fontSize="small" /></ListItemIcon>
           <ListItemText>Delete</ListItemText>
         </MenuItem>
