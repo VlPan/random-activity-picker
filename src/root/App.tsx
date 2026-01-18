@@ -12,6 +12,7 @@ import { Box, CssBaseline } from "@mui/material";
 import Sidebar from "../components/layout/Sidebar";
 import { DailyAnketDialog } from "../components/anket/DailyAnketDialog";
 import { useAnketCheck } from "../hooks/useAnketCheck";
+import { SessionTodosPanel } from "../components/todo/SessionTodosPanel";
 
 // Wrapper component that uses the anket hook (must be inside UserProvider)
 function AppContent() {
@@ -34,6 +35,7 @@ function AppContent() {
           <Outlet />
         </Box>
       </Box>
+      <SessionTodosPanel />
       <DailyAnketDialog
         open={showAnket}
         missingDays={missingDays}

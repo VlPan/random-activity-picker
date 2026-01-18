@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Tabs, Tab, Box, Typography, Fab, Menu, MenuItem, ListItemIcon, ListItemText, IconButton, Tooltip } from '@mui/material';
+import { Tabs, Tab, Box, Typography, Fab, Menu, MenuItem, ListItemIcon, ListItemText } from '@mui/material';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import type { DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, horizontalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
@@ -7,7 +7,6 @@ import { CSS } from '@dnd-kit/utilities';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import DeleteSweepIcon from '@mui/icons-material/DeleteSweep';
 import BlockIcon from '@mui/icons-material/Block';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import styles from './Randomizer.module.css';
@@ -21,10 +20,7 @@ import { RandomActivityPicker } from '../../components/activities/RandomActivity
 import { AddPlaylistPanel } from '../../components/playlists/AddPlaylistPanel';
 import { EditPlaylistDialog } from '../../components/playlists/EditPlaylistDialog';
 import { ActivitiesTable } from '../../components/activities/ActivitiesTable';
-import { FloatingPanel } from '../../components/common/FloatingPanel';
 import { ConfirmationDialog } from '../../components/common/ConfirmationDialog';
-import { TodoList } from '../../components/todo/TodoList';
-import { TaskRewardDialog } from '../../components/todo/TaskRewardDialog';
 import type { TodoItem } from '../../models/todo';
 
 type TabSelection = 
@@ -66,14 +62,10 @@ const SortableTab = (props: any) => {
 
 const Randomizer = () => {
   const { playlists, loading, activities, updatePlaylist, deletePlaylist, reorderPlaylists } = useActivityContext();
-  const { todoItems, addTodo, removeTodo, toggleComplete, clearTodos, resetTodoTime, activeTaskId, pauseTimer, resumeTimer, completeTask } = useTodoContext();
+  const { addTodo } = useTodoContext();
   const [selectedTab, setSelectedTab] = useState<TabSelection>({ type: 'playlist', index: 0 });
   const [isAddActivityOpen, setIsAddActivityOpen] = useState(false);
   const [editingActivity, setEditingActivity] = useState<Activity | undefined>(undefined);
-  // Removed local todoItems state
-  const [isRewardDialogOpen, setIsRewardDialogOpen] = useState(false);
-  const [completedTaskId, setCompletedTaskId] = useState<string | null>(null);
-  const [confirmClearDialogOpen, setConfirmClearDialogOpen] = useState(false);
 
   // Context Menu State
   const [contextMenu, setContextMenu] = useState<{
@@ -173,23 +165,6 @@ const Randomizer = () => {
     addTodo(newItem);
   };
 
-  const handleToggleTodo = (id: string) => {
-    const item = todoItems.find(i => i.id === id);
-    if (item && !item.isCompleted) {
-        if (activeTaskId === id) {
-            pauseTimer();
-        }
-        setCompletedTaskId(id);
-        setIsRewardDialogOpen(true);
-    } else {
-        toggleComplete(id);
-    }
-  };
-
-  const handleDeleteTodo = (id: string) => {
-    removeTodo(id);
-  };
-
   const handleContextMenu = (event: React.MouseEvent, playlist: ActivitiesPlaylist) => {
     event.preventDefault();
     setContextMenu(
@@ -251,15 +226,6 @@ const Randomizer = () => {
       setDeleteDialogOpen(false);
       setPlaylistToAction(null);
     }
-  };
-
-  const handleClearTodos = () => {
-    setConfirmClearDialogOpen(true);
-  };
-
-  const handleConfirmClear = () => {
-    clearTodos();
-    setConfirmClearDialogOpen(false);
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -443,26 +409,6 @@ const Randomizer = () => {
         activityToEdit={editingActivity}
       />
 
-      {todoItems.length > 0 && (
-        <FloatingPanel 
-            title="Session Todos" 
-            width={400}
-            action={
-                <Tooltip title="Clear all todos">
-                    <IconButton size="small" onClick={handleClearTodos} color="inherit">
-                        <DeleteSweepIcon fontSize="small" />
-                    </IconButton>
-                </Tooltip>
-            }
-        >
-          <TodoList
-            items={todoItems}
-            onToggleComplete={handleToggleTodo}
-            onDelete={handleDeleteTodo}
-          />
-        </FloatingPanel>
-      )}
-
       <Menu
         open={contextMenu !== null}
         onClose={handleCloseContextMenu}
@@ -509,39 +455,6 @@ const Randomizer = () => {
         onConfirm={handleConfirmDelete}
         confirmLabel="Delete"
         confirmColor="error"
-      />
-
-      <ConfirmationDialog
-        open={confirmClearDialogOpen}
-        title="Clear Session Todos"
-        content="Are you sure you want to clear all session todos? This action cannot be undone."
-        onClose={() => setConfirmClearDialogOpen(false)}
-        onConfirm={handleConfirmClear}
-        confirmLabel="Clear All"
-        confirmColor="error"
-      />
-      
-      <TaskRewardDialog
-        open={isRewardDialogOpen}
-        onClose={() => {
-            setIsRewardDialogOpen(false);
-            setCompletedTaskId(null);
-        }}
-        onTakeRewards={() => {
-            if (completedTaskId) {
-                completeTask(completedTaskId);
-                resetTodoTime(completedTaskId);
-            }
-            setIsRewardDialogOpen(false);
-            setCompletedTaskId(null);
-        }}
-        onContinueTask={() => {
-            resumeTimer();
-            setIsRewardDialogOpen(false);
-            setCompletedTaskId(null);
-        }}
-        timeSpent={todoItems.find(i => i.id === completedTaskId)?.timeSpent}
-        taskName={todoItems.find(i => i.id === completedTaskId)?.displayName}
       />
     </Box>
   );
