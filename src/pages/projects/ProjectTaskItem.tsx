@@ -65,6 +65,14 @@ const ProjectTaskItem = ({ task, onComplete, onUpdate }: ProjectTaskItemProps) =
           onChange={() => onComplete(task.id)}
           color="success"
         />
+        <StatusIndicator 
+            status={task.status} 
+            size={12}
+            onClick={(e) => {
+                e.stopPropagation();
+                setStatusModalOpen(true);
+            }} 
+        />
         <Typography 
             variant="body1" 
             sx={{ 
@@ -74,14 +82,6 @@ const ProjectTaskItem = ({ task, onComplete, onUpdate }: ProjectTaskItemProps) =
         >
           {task.name}
         </Typography>
-        <StatusIndicator 
-            status={task.status} 
-            size={12}
-            onClick={(e) => {
-                e.stopPropagation();
-                setStatusModalOpen(true);
-            }} 
-        />
       </Box>
 
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
