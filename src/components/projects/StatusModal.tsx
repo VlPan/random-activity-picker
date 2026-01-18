@@ -60,12 +60,20 @@ const StatusModal = ({ open, onClose, title, currentStatus, comments, onSave }: 
       createdAt: new Date().toISOString()
     };
     
-    setLocalComments([...localComments, comment]);
+    const updatedComments = [...localComments, comment];
+    setLocalComments(updatedComments);
     setNewComment('');
+    
+    // Save the comment immediately
+    onSave(status, updatedComments);
   };
 
   const handleDeleteComment = (id: string) => {
-    setLocalComments(localComments.filter(c => c.id !== id));
+    const updatedComments = localComments.filter(c => c.id !== id);
+    setLocalComments(updatedComments);
+    
+    // Save the deletion immediately
+    onSave(status, updatedComments);
   };
 
   const handleStartEditComment = (comment: Comment) => {
@@ -76,13 +84,17 @@ const StatusModal = ({ open, onClose, title, currentStatus, comments, onSave }: 
   const handleSaveEditComment = () => {
     if (!editingCommentText.trim() || !editingCommentId) return;
     
-    setLocalComments(localComments.map(c => 
+    const updatedComments = localComments.map(c => 
       c.id === editingCommentId 
         ? { ...c, text: editingCommentText.trim() } 
         : c
-    ));
+    );
+    setLocalComments(updatedComments);
     setEditingCommentId(null);
     setEditingCommentText('');
+    
+    // Save the edited comment immediately
+    onSave(status, updatedComments);
   };
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, commentId: string) => {
