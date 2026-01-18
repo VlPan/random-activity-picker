@@ -14,7 +14,7 @@ interface TaskRewardDialogProps {
 }
 
 export const TaskRewardDialog = ({ open, onClose, onTakeRewards, onContinueTask, timeSpent, taskName }: TaskRewardDialogProps) => {
-  const { updatePoints, rewardSettings } = useUserContext();
+  const { updatePoints, updateRandomPicks, rewardSettings } = useUserContext();
   const { getFormattedTime } = useTodoContext();
   const { step, rewards, startGeneration, reset } = useRewardGeneration();
   const [numRewards, setNumRewards] = useState<number>(1);
@@ -68,6 +68,12 @@ export const TaskRewardDialog = ({ open, onClose, onTakeRewards, onContinueTask,
   }, [open, minPoints, noReward]);
 
   const handleStartGeneration = () => {
+    const reason = taskName ? `Task Reward: ${taskName}` : 'Task Reward';
+    // First record receiving RPs from task completion with category "Tasks"
+    updateRandomPicks(numRewards, reason, 'Tasks');
+    // Then consume those RPs to generate rewards
+    updateRandomPicks(-numRewards, 'Used for Rewards');
+    // Generate random point values
     startGeneration(numRewards);
   };
 

@@ -76,6 +76,15 @@ const History = () => {
                     sx={{ height: 20, fontSize: '0.7rem' }} 
                   />
                 )}
+                {item.subcategory && (
+                  <Chip 
+                    label={item.subcategory} 
+                    size="small" 
+                    color="info"
+                    variant="outlined"
+                    sx={{ height: 20, fontSize: '0.7rem' }} 
+                  />
+                )}
                 {item.isEssential !== undefined && (
                   <Chip
                     label={item.isEssential ? 'Essential' : 'Non-Essential'}

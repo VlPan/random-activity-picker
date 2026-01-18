@@ -90,7 +90,7 @@ export const useAnketCheck = () => {
     Object.entries(parameterValues).forEach(([paramId, value]) => {
         const paramDef = rewardSettings.dailyReportParameters?.find(p => p.id === paramId);
         if (paramDef && value > 0) {
-            updateRandomPicksWithDate(value, `Daily Report: ${paramDef.name}`, dateIso, 'Daily Report');
+            updateRandomPicksWithDate(value, `Daily Report: ${paramDef.name}`, dateIso, 'Daily Report', paramDef.name);
         }
     });
 

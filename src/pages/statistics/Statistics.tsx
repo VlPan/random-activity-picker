@@ -241,42 +241,88 @@ const Statistics = () => {
     return result;
   }, [history, timeRange]);
 
-  const chartData = useMemo(() => {
+  // Get all unique RP source categories from history
+  const rpSourceCategories = useMemo(() => {
+    const categories = new Set<string>();
+    history.forEach(item => {
+      if (item.type === 'randomPicks' && item.amount > 0) {
+        if (item.category === 'Tasks') {
+          categories.add('Tasks');
+        } else if (item.category === 'Daily Report' && item.subcategory) {
+          categories.add(item.subcategory);
+        }
+      }
+    });
+    // Always include Tasks first, then sort Daily Report parameters
+    const result: string[] = [];
+    if (categories.has('Tasks')) {
+      result.push('Tasks');
+      categories.delete('Tasks');
+    }
+    result.push(...Array.from(categories).sort());
+    return result;
+  }, [history]);
+
+  // Distinct colors palette for RP sources
+  const RP_COLORS_PALETTE = [
+    '#9c27b0', // Purple (for Tasks)
+    '#2196f3', // Blue
+    '#4caf50', // Green
+    '#ff9800', // Orange
+    '#e91e63', // Pink
+    '#00bcd4', // Cyan
+    '#ff5722', // Deep Orange
+    '#3f51b5', // Indigo
+    '#009688', // Teal
+    '#cddc39', // Lime
+    '#795548', // Brown
+    '#607d8b', // Blue Grey
+  ];
+  
+  // Map categories to colors based on their index for consistent distinct colors
+  const rpSourceColorMap = useMemo(() => {
+    const colorMap: Record<string, string> = {};
+    rpSourceCategories.forEach((cat, index) => {
+      colorMap[cat] = RP_COLORS_PALETTE[index % RP_COLORS_PALETTE.length];
+    });
+    return colorMap;
+  }, [rpSourceCategories]);
+
+  const getSourceColor = (source: string): string => {
+    return rpSourceColorMap[source] || '#9e9e9e';
+  };
+
+  const rpReceivedData = useMemo(() => {
     const now = new Date();
     now.setHours(23, 59, 59, 999);
     const startDate = getStartDate(timeRange, now);
 
-    // Filter relevant history items
+    // Filter for randomPicks type with positive amounts (RPs received, not spent)
     const relevantItems = history.filter(item => {
-      // Allow both exact match and startsWith for task rewards
-      const isRandomReward = item.reason === 'Random Reward';
-      const isTaskReward = item.reason.startsWith('Task Reward');
+      if (item.type !== 'randomPicks') return false;
+      if (item.amount <= 0) return false;
       
-      if (!isRandomReward && !isTaskReward) return false;
-
-      // Include BOTH Random Rewards AND Task Rewards for "Rewards Received"
-      return true;
-
-    }).filter(item => {
-        const itemDate = new Date(item.date);
-        return itemDate >= startDate && itemDate <= now;
+      const itemDate = new Date(item.date);
+      return itemDate >= startDate && itemDate <= now;
     });
 
-    // Group by date
-    const dailyStats = new Map<string, { count: number; points: number }>();
-
     const getLocalDateKey = (date: Date) => {
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
     };
-    
-    // Initialize all days in range with 0
+
+    // Initialize all days with 0 for each category
+    const dailyStats = new Map<string, Record<string, number>>();
     const currentDate = new Date(startDate);
     while (currentDate <= now) {
       const dateKey = getLocalDateKey(currentDate);
-      dailyStats.set(dateKey, { count: 0, points: 0 });
+      const dayStats: Record<string, number> = {};
+      rpSourceCategories.forEach(cat => {
+        dayStats[cat] = 0;
+      });
+      dailyStats.set(dateKey, dayStats);
       currentDate.setDate(currentDate.getDate() + 1);
     }
 
@@ -286,39 +332,60 @@ const Statistics = () => {
       const dateKey = getLocalDateKey(itemDate);
       if (dailyStats.has(dateKey)) {
         const stats = dailyStats.get(dateKey)!;
-        const count = item.count || 1; // Default to 1
-        stats.count += count;
-        stats.points += item.amount;
+        let sourceKey = 'Other';
+        
+        if (item.category === 'Tasks') {
+          sourceKey = 'Tasks';
+        } else if (item.category === 'Daily Report' && item.subcategory) {
+          sourceKey = item.subcategory;
+        }
+        
+        if (stats[sourceKey] !== undefined) {
+          stats[sourceKey] += item.amount;
+        }
       }
     });
 
-    // Convert to array
+    // Convert to array format for recharts
     return Array.from(dailyStats.entries()).map(([date, stats]) => ({
       date,
       displayDate: formatDate(date),
-      count: stats.count,
-      points: stats.points
+      ...stats
     }));
-  }, [history, timeRange]);
+  }, [history, timeRange, rpSourceCategories]);
 
-  const randomRewardStats = useMemo(() => {
-    const totalRewards = chartData.reduce((acc, curr) => acc + curr.count, 0);
-    const totalPoints = chartData.reduce((acc, curr) => acc + curr.points, 0);
+  const rpReceivedStats = useMemo(() => {
+    // Calculate total RPs and per-category totals
+    const categoryTotals: Record<string, number> = {};
+    rpSourceCategories.forEach(cat => {
+      categoryTotals[cat] = 0;
+    });
+
+    rpReceivedData.forEach(day => {
+      rpSourceCategories.forEach(cat => {
+        const value = (day as Record<string, unknown>)[cat];
+        if (typeof value === 'number') {
+          categoryTotals[cat] += value;
+        }
+      });
+    });
+
+    const totalRPs = Object.values(categoryTotals).reduce((sum, val) => sum + val, 0);
     
     const now = new Date();
     now.setHours(23, 59, 59, 999);
     const startDate = getStartDate(timeRange, now);
     const diffTime = Math.abs(now.getTime() - startDate.getTime());
-    const daysInRange = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+    const daysInRange = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     
-    const avgRewards = daysInRange > 0 ? (totalRewards / daysInRange) : 0;
+    const avgRPs = daysInRange > 0 ? (totalRPs / daysInRange) : 0;
 
     return {
-      totalRewards,
-      totalPoints,
-      avgRewards: avgRewards.toFixed(1)
+      totalRPs,
+      avgRPs: avgRPs.toFixed(1),
+      categoryTotals
     };
-  }, [chartData, timeRange]);
+  }, [rpReceivedData, rpSourceCategories, timeRange]);
 
   const financialData = useMemo(() => {
     const now = new Date();
@@ -560,34 +627,39 @@ const Statistics = () => {
         </ToggleButtonGroup>
       </Box>
 
-      {/* Rewards Received Section */}
+      {/* Random Picks Received Section */}
       <Paper sx={{ p: 3, mb: 3 }}>
-        <Typography variant="h6" gutterBottom>Rewards Received</Typography>
+        <Typography variant="h6" gutterBottom>Random Picks Received</Typography>
 
         <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2, mb: 3 }}>
             <Card elevation={2} sx={{ flex: 1, bgcolor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : '#f5f5f5' }}>
                 <CardContent>
-                    <Typography color="text.secondary" gutterBottom>Total Rewards</Typography>
-                    <Typography variant="h4">{randomRewardStats.totalRewards}</Typography>
+                    <Typography color="text.secondary" gutterBottom>Total RPs Received</Typography>
+                    <Typography variant="h4">{rpReceivedStats.totalRPs}</Typography>
                 </CardContent>
             </Card>
             <Card elevation={2} sx={{ flex: 1, bgcolor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : '#f5f5f5' }}>
                 <CardContent>
-                    <Typography color="text.secondary" gutterBottom>Avg Rewards / Day</Typography>
-                    <Typography variant="h4">{randomRewardStats.avgRewards}</Typography>
+                    <Typography color="text.secondary" gutterBottom>Avg RPs / Day</Typography>
+                    <Typography variant="h4">{rpReceivedStats.avgRPs}</Typography>
                 </CardContent>
             </Card>
-            <Card elevation={2} sx={{ flex: 1, bgcolor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : '#f5f5f5' }}>
+            {rpSourceCategories.slice(0, 3).map(cat => (
+              <Card key={cat} elevation={2} sx={{ flex: 1, bgcolor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : '#f5f5f5' }}>
                 <CardContent>
-                    <Typography color="text.secondary" gutterBottom>Total Points</Typography>
-                    <Typography variant="h4">{randomRewardStats.totalPoints}</Typography>
+                    <Typography color="text.secondary" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: getSourceColor(cat) }} />
+                      {cat}
+                    </Typography>
+                    <Typography variant="h4">{rpReceivedStats.categoryTotals[cat] || 0}</Typography>
                 </CardContent>
-            </Card>
+              </Card>
+            ))}
         </Box>
 
         <Box sx={{ height: 400, width: '100%' }}>
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+            <BarChart data={rpReceivedData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis 
                 dataKey="displayDate" 
@@ -597,15 +669,18 @@ const Statistics = () => {
               <YAxis allowDecimals={false} />
               <Tooltip 
                 contentStyle={{ backgroundColor: theme.palette.background.paper, color: theme.palette.text.primary }}
-                itemStyle={{ color: theme.palette.primary.main }}
-                formatter={(value: number | undefined) => [value, 'Rewards']}
                 labelFormatter={(label) => `Date: ${label}`}
               />
-              <Bar dataKey="count" fill={theme.palette.primary.main}>
-                {chartData.map((_, index) => (
-                    <Cell key={`cell-${index}`} fill={theme.palette.primary.main} />
-                ))}
-              </Bar>
+              <Legend />
+              {rpSourceCategories.map(cat => (
+                <Bar 
+                  key={cat}
+                  dataKey={cat} 
+                  name={cat}
+                  stackId="rp"
+                  fill={getSourceColor(cat)} 
+                />
+              ))}
             </BarChart>
           </ResponsiveContainer>
         </Box>

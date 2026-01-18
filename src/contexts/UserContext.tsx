@@ -18,7 +18,7 @@ export interface DailyReportParameter {
   description: string;
 }
 
-export type SpendingCategory = 'Manual' | 'Bill' | 'Anket' | 'Daily Report' | 'Shop' | 'Project' | 'Other';
+export type SpendingCategory = 'Manual' | 'Bill' | 'Anket' | 'Daily Report' | 'Shop' | 'Project' | 'Tasks' | 'Other';
 
 export interface HistoryItem {
   id: string;
@@ -27,6 +27,7 @@ export interface HistoryItem {
   type: 'points' | 'balance' | 'randomPicks';
   reason: string;
   category?: SpendingCategory;
+  subcategory?: string; // For additional categorization (e.g., parameter name for Daily Report)
   isEssential?: boolean;
   count?: number;
   duration?: number; // In seconds
@@ -43,8 +44,8 @@ interface UserContextType {
   updateBalance: (amount: number, reason?: string, category?: SpendingCategory, isEssential?: boolean) => void;
   updateBalanceWithDate: (amount: number, reason: string, customDate: string, category?: SpendingCategory, isEssential?: boolean) => void;
   updatePoints: (amount: number, reason?: string, count?: number, duration?: number, category?: SpendingCategory) => void;
-  updateRandomPicks: (amount: number, reason?: string) => void;
-  updateRandomPicksWithDate: (amount: number, reason: string, customDate: string, category?: SpendingCategory) => void;
+  updateRandomPicks: (amount: number, reason?: string, category?: SpendingCategory, subcategory?: string) => void;
+  updateRandomPicksWithDate: (amount: number, reason: string, customDate: string, category?: SpendingCategory, subcategory?: string) => void;
   exchangePoints: (pointsToExchange: number) => void;
   setLuckyNumber: (num: number) => void;
   updateRewardSettings: (settings: RewardSettings) => void;
@@ -114,7 +115,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
-  const addHistoryItem = (amount: number, type: 'points' | 'balance' | 'randomPicks', reason: string, count?: number, duration?: number, category?: SpendingCategory, isEssential?: boolean) => {
+  const addHistoryItem = (amount: number, type: 'points' | 'balance' | 'randomPicks', reason: string, count?: number, duration?: number, category?: SpendingCategory, isEssential?: boolean, subcategory?: string) => {
     const newItem: HistoryItem = {
         id: crypto.randomUUID(),
         date: new Date().toISOString(),
@@ -124,6 +125,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         count,
         duration,
         category,
+        subcategory,
         isEssential
     };
     
@@ -134,7 +136,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
-  const addHistoryItemWithDate = (amount: number, type: 'points' | 'balance' | 'randomPicks', reason: string, customDate: string, category?: SpendingCategory, isEssential?: boolean) => {
+  const addHistoryItemWithDate = (amount: number, type: 'points' | 'balance' | 'randomPicks', reason: string, customDate: string, category?: SpendingCategory, isEssential?: boolean, subcategory?: string) => {
     const newItem: HistoryItem = {
         id: crypto.randomUUID(),
         date: customDate,
@@ -142,6 +144,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         type,
         reason,
         category,
+        subcategory,
         isEssential
     };
     
@@ -179,22 +182,22 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     addHistoryItem(amount, 'points', reason, count, duration, category);
   };
 
-  const updateRandomPicks = (amount: number, reason: string = 'Manual Adjustment') => {
+  const updateRandomPicks = (amount: number, reason: string = 'Manual Adjustment', category?: SpendingCategory, subcategory?: string) => {
     setRandomPicks((prev) => {
       const newPicks = Math.max(0, prev + amount); // Ensure non-negative
       localStorage.setItem('userRandomPicks', newPicks.toString());
       return newPicks;
     });
-    addHistoryItem(amount, 'randomPicks', reason);
+    addHistoryItem(amount, 'randomPicks', reason, undefined, undefined, category, undefined, subcategory);
   };
 
-  const updateRandomPicksWithDate = (amount: number, reason: string, customDate: string, category?: SpendingCategory) => {
+  const updateRandomPicksWithDate = (amount: number, reason: string, customDate: string, category?: SpendingCategory, subcategory?: string) => {
     setRandomPicks((prev) => {
       const newPicks = Math.max(0, prev + amount);
       localStorage.setItem('userRandomPicks', newPicks.toString());
       return newPicks;
     });
-    addHistoryItemWithDate(amount, 'randomPicks', reason, customDate, category);
+    addHistoryItemWithDate(amount, 'randomPicks', reason, customDate, category, undefined, subcategory);
   };
 
   const exchangePoints = (pointsToExchange: number) => {
