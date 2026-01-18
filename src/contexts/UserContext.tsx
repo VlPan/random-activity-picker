@@ -30,7 +30,6 @@ interface UserContextType {
   points: number;  // Points
   randomPicks: number; // Random Picks (RP)
   luckyNumber: number;
-  luckBuffer: number;
   rewardSettings: RewardSettings;
   history: HistoryItem[];
   lastAnketDate: string | null; // ISO date string (date only, e.g., "2026-01-15")
@@ -40,7 +39,6 @@ interface UserContextType {
   updateRandomPicks: (amount: number, reason?: string) => void;
   exchangePoints: (pointsToExchange: number) => void;
   setLuckyNumber: (num: number) => void;
-  processRewardPick: (value: number, minVal: number) => void;
   updateRewardSettings: (settings: RewardSettings) => void;
   setLastAnketDate: (date: string) => void;
   clearHistory: () => void;
@@ -63,7 +61,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [points, setPoints] = useState<number>(0);
   const [randomPicks, setRandomPicks] = useState<number>(0);
   const [luckyNumber, setLuckyNumberState] = useState<number>(2);
-  const [luckBuffer, setLuckBuffer] = useState<number>(0);
   const [rewardSettings, setRewardSettings] = useState<RewardSettings>(defaultRewardSettings);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [lastAnketDate, setLastAnketDateState] = useState<string | null>(null);
@@ -73,7 +70,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     const storedPoints = localStorage.getItem('userPoints');
     const storedRandomPicks = localStorage.getItem('userRandomPicks');
     const storedLuckyNumber = localStorage.getItem('luckyNumber');
-    const storedLuckBuffer = localStorage.getItem('userLuckBuffer');
     const storedSettings = localStorage.getItem('rewardSettings');
     const storedHistory = localStorage.getItem('userHistory');
     const storedLastAnketDate = localStorage.getItem('lastAnketDate');
@@ -89,9 +85,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     }
     if (storedLuckyNumber) {
       setLuckyNumberState(Number(storedLuckyNumber));
-    }
-    if (storedLuckBuffer) {
-      setLuckBuffer(Number(storedLuckBuffer));
     }
     if (storedSettings) {
       try {
@@ -206,52 +199,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem('luckyNumber', num.toString());
   };
 
-  const processRewardPick = (value: number, minVal: number) => {
-    setLuckBuffer(prev => {
-      let newBuffer = prev;
-      
-      // 1. Calculate Buffer Change
-      if (value === minVal) {
-        // Small reward: slowly build up luck (+1)
-        newBuffer += 1;
-      } else {
-        // Big reward: spend luck proportional to value
-        // Example: 10zl reward (where min is 1zl) = -10 buffer
-        const cost = (value / minVal);
-        newBuffer -= cost;
-      }
-
-      // 2. Check Thresholds (Sensitivity = 10)
-      const THRESHOLD = 5;
-      const STEP = 0.1;
-      let luckChange = 0;
-
-      // Increase Luck if buffer is full
-      while (newBuffer >= THRESHOLD) {
-        luckChange += STEP;
-        newBuffer -= THRESHOLD;
-      }
-
-      // Decrease Luck if buffer is in debt
-      while (newBuffer <= -THRESHOLD) {
-        luckChange -= STEP;
-        newBuffer += THRESHOLD;
-      }
-
-      // 3. Apply Luck Change if needed
-      if (luckChange !== 0) {
-        setLuckyNumberState(currentLuck => {
-          const nextLuck = Math.max(1, currentLuck + luckChange); // Don't go below 1
-          localStorage.setItem('luckyNumber', nextLuck.toString());
-          return nextLuck;
-        });
-      }
-
-      localStorage.setItem('userLuckBuffer', newBuffer.toString());
-      return newBuffer;
-    });
-  };
-
   const updateRewardSettings = (settings: RewardSettings) => {
     setRewardSettings(settings);
     localStorage.setItem('rewardSettings', JSON.stringify(settings));
@@ -278,7 +225,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     points,
     randomPicks,
     luckyNumber,
-    luckBuffer,
     rewardSettings,
     history,
     lastAnketDate,
@@ -288,7 +234,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     updateRandomPicks,
     exchangePoints,
     setLuckyNumber,
-    processRewardPick,
     updateRewardSettings,
     setLastAnketDate,
     clearHistory

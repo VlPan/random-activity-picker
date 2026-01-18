@@ -12,7 +12,7 @@ export const getRewardStyle = (val: number) => {
 };
 
 export const useRewardGeneration = () => {
-  const { luckyNumber, processRewardPick } = useUserContext();
+  const { luckyNumber } = useUserContext();
   const { rewards: rewardsMap } = useRewardContext();
   
   const [step, setStep] = useState<RewardGenerationStep>('input');
@@ -75,12 +75,6 @@ export const useRewardGeneration = () => {
       const timer = setTimeout(() => {
         const newValue = generateRewardValue();
         
-        // Calculate min value for logic
-        const uniqueValues = Array.from(new Set(Array.from(rewardsMap.values()).map(r => r.value))).sort((a, b) => a - b);
-        const minVal = uniqueValues[0] || 1;
-        
-        processRewardPick(newValue, minVal);
-
         setRewards(prev => [...prev, newValue]);
         setCurrentIndex(prev => prev + 1);
       }, delay);
@@ -88,7 +82,7 @@ export const useRewardGeneration = () => {
     } else if (step === 'generating' && currentIndex >= targetCount) {
       setStep('finished');
     }
-  }, [step, currentIndex, targetCount, generateRewardValue, rewardsMap, processRewardPick]);
+  }, [step, currentIndex, targetCount, generateRewardValue]);
 
   return {
     step,
