@@ -160,9 +160,6 @@ const ProjectCard = ({ project, onDelete, onEdit, onProjectUpdate, onTaskComplet
                 >
                     <Box>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Typography variant="h6" component="div">
-                                {project.name}
-                            </Typography>
                             <StatusIndicator 
                                 status={project.status} 
                                 onClick={(e) => {
@@ -170,6 +167,9 @@ const ProjectCard = ({ project, onDelete, onEdit, onProjectUpdate, onTaskComplet
                                     setStatusModalOpen(true);
                                 }} 
                             />
+                            <Typography variant="h6" component="div">
+                                {project.name}
+                            </Typography>
                         </Box>
                         <Typography variant="caption" color={isOverdue ? 'error.main' : 'text.secondary'}>
                             {formatDate(project.startDate)} - {formatDate(project.endDate)}
