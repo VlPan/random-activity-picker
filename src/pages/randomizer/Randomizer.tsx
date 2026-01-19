@@ -9,6 +9,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import BlockIcon from '@mui/icons-material/Block';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import PlaylistAddIcon from '@mui/icons-material/PlaylistAdd';
 import styles from './Randomizer.module.css';
 import { useActivityContext } from '../../contexts/ActivityContext';
 import { useTodoContext } from '../../contexts/TodoContext';
@@ -206,6 +207,21 @@ const Randomizer = () => {
         priority: newPriority
       });
       setPlaylistToAction(null);
+    }
+  };
+
+  const handlePickPlaylist = () => {
+    if (contextMenu) {
+      const playlist = contextMenu.playlist;
+      const newItem: TodoItem = {
+        id: crypto.randomUUID(),
+        displayName: playlist.displayName,
+        playlistName: playlist.displayName,
+        isCompleted: false,
+        timeSpent: 0
+      };
+      addTodo(newItem);
+      handleCloseContextMenu();
     }
   };
 
@@ -419,6 +435,12 @@ const Randomizer = () => {
             : undefined
         }
       >
+        <MenuItem onClick={handlePickPlaylist}>
+          <ListItemIcon>
+            <PlaylistAddIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Pick Activity</ListItemText>
+        </MenuItem>
         <MenuItem onClick={handleEditClick}>
           <ListItemIcon>
             <EditIcon fontSize="small" />
