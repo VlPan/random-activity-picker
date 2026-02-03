@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { Box, Typography, Paper, ToggleButton, ToggleButtonGroup, useTheme, Card, CardContent } from '@mui/material';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend, AreaChart, Area } from 'recharts';
 import { useUserContext } from '../../contexts/UserContext';
@@ -7,7 +7,7 @@ import { formatDate } from '../../utils/dateUtils';
 type TimeRange = 'week' | '7days' | '30days' | '100days' | '300days';
 
 const Statistics = () => {
-  const { history } = useUserContext();
+  const { history, rewardSettings } = useUserContext();
   const theme = useTheme();
   const [timeRange, setTimeRange] = useState<TimeRange>('week');
 
@@ -241,6 +241,19 @@ const Statistics = () => {
     return result;
   }, [history, timeRange]);
 
+  // Get set of active parameter names from settings
+  const activeParameterNames = useMemo(() => {
+    return new Set((rewardSettings.dailyReportParameters || []).map(p => p.name));
+  }, [rewardSettings.dailyReportParameters]);
+
+  // Map parameter name to display name (use "Other" if not in active settings)
+  const mapParameterName = useCallback((name: string): string => {
+    if (name === 'Tasks') return 'Tasks';
+    // If parameter is not in active settings, map to "Other"
+    if (!activeParameterNames.has(name)) return 'Other';
+    return name;
+  }, [activeParameterNames]);
+
   // Get all unique RP source categories from history
   const rpSourceCategories = useMemo(() => {
     const categories = new Set<string>();
@@ -249,19 +262,30 @@ const Statistics = () => {
         if (item.category === 'Tasks') {
           categories.add('Tasks');
         } else if (item.category === 'Daily Report' && item.subcategory) {
-          categories.add(item.subcategory);
+          // Map to "Other" if parameter is not in active settings
+          const mappedName = mapParameterName(item.subcategory);
+          categories.add(mappedName);
         }
       }
     });
-    // Always include Tasks first, then sort Daily Report parameters
+    // Always include Tasks first, then sort Daily Report parameters (with "Other" last)
     const result: string[] = [];
     if (categories.has('Tasks')) {
       result.push('Tasks');
       categories.delete('Tasks');
     }
-    result.push(...Array.from(categories).sort());
+    const otherCategories = Array.from(categories);
+    const otherIndex = otherCategories.indexOf('Other');
+    if (otherIndex !== -1) {
+      otherCategories.splice(otherIndex, 1);
+      otherCategories.sort();
+      result.push(...otherCategories);
+      result.push('Other'); // Always put "Other" at the end
+    } else {
+      result.push(...otherCategories.sort());
+    }
     return result;
-  }, [history]);
+  }, [history, activeParameterNames, mapParameterName]);
 
   // Distinct colors palette for RP sources
   const RP_COLORS_PALETTE = [
@@ -289,6 +313,8 @@ const Statistics = () => {
   }, [rpSourceCategories]);
 
   const getSourceColor = (source: string): string => {
+    // Always use grey for "Other"
+    if (source === 'Other') return '#9e9e9e';
     return rpSourceColorMap[source] || '#9e9e9e';
   };
 
@@ -337,7 +363,8 @@ const Statistics = () => {
         if (item.category === 'Tasks') {
           sourceKey = 'Tasks';
         } else if (item.category === 'Daily Report' && item.subcategory) {
-          sourceKey = item.subcategory;
+          // Map to "Other" if parameter is not in active settings
+          sourceKey = mapParameterName(item.subcategory);
         }
         
         if (stats[sourceKey] !== undefined) {
@@ -352,7 +379,7 @@ const Statistics = () => {
       displayDate: formatDate(date),
       ...stats
     }));
-  }, [history, timeRange, rpSourceCategories]);
+  }, [history, timeRange, rpSourceCategories, mapParameterName]);
 
   const rpReceivedStats = useMemo(() => {
     // Calculate total RPs and per-category totals
@@ -385,7 +412,7 @@ const Statistics = () => {
       avgRPs: avgRPs.toFixed(1),
       categoryTotals
     };
-  }, [rpReceivedData, rpSourceCategories, timeRange]);
+  }, [rpReceivedData, rpSourceCategories, timeRange, activeParameterNames]);
 
   const financialData = useMemo(() => {
     const now = new Date();
