@@ -8,6 +8,7 @@ import {
 } from "react-router-dom";
 import App from "./App.tsx";
 import Randomizer from '../pages/randomizer/Randomizer.tsx';
+import Flow from '../pages/flow/Flow.tsx';
 import Inventory from '../pages/inventory/Inventory.tsx';
 import Settings from '../pages/settings/Settings.tsx';
 import Bills from '../pages/bills/Bills.tsx';
@@ -30,6 +31,10 @@ const router = createHashRouter([
       {
         path: "randomizer",
         element: <Randomizer />,
+      },
+      {
+        path: "flow",
+        element: <Flow />,
       },
       {
         path: "inventory",

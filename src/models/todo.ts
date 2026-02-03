@@ -7,4 +7,5 @@ export interface TodoItem {
   completedAt?: Date;
   timeSpent?: number; // In seconds
   lastStartedAt?: Date;
+  isFlowSession?: boolean;
 }
