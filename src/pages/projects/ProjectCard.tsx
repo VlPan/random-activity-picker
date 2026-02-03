@@ -42,9 +42,11 @@ interface ProjectCardProps {
     onTaskComplete: (taskId: string) => void;
     onTaskReorder: (projectId: string, tasks: ProjectTask[]) => void;
     onTaskUpdate: (projectId: string, task: ProjectTask) => void;
+    onArchive?: (id: string) => void;
+    onUnarchive?: (id: string) => void;
 }
 
-const ProjectCard = ({ project, onDelete, onEdit, onProjectUpdate, onTaskComplete, onTaskReorder, onTaskUpdate }: ProjectCardProps) => {
+const ProjectCard = ({ project, onDelete, onEdit, onProjectUpdate, onTaskComplete, onTaskReorder, onTaskUpdate, onArchive, onUnarchive }: ProjectCardProps) => {
     const [statusModalOpen, setStatusModalOpen] = useState(false);
 
     const sensors = useSensors(
@@ -249,8 +251,11 @@ const ProjectCard = ({ project, onDelete, onEdit, onProjectUpdate, onTaskComplet
                 currentStatus={project.status || 'unset'}
                 comments={project.comments || []}
                 isImportant={project.isImportant || false}
+                isArchived={project.isArchived || false}
                 projectId={project.id}
                 onSave={handleStatusSave}
+                onArchive={onArchive}
+                onUnarchive={onUnarchive}
             />
         </Card>
     );

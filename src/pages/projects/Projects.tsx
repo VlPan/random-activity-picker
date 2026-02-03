@@ -1,15 +1,17 @@
-import { Box, Typography, Button } from '@mui/material';
+import { Box, Typography, Button, Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { useState } from 'react';
 import { useProjectContext } from '../../contexts/ProjectContext';
 import { useUserContext } from '../../contexts/UserContext';
 import ProjectCard from './ProjectCard';
 import CreateProjectDialog from './CreateProjectDialog';
 import ProjectTaskRewardDialog from './ProjectTaskRewardDialog';
+import { ConfirmationDialog } from '../../components/common/ConfirmationDialog';
 import type { Project, ProjectTask } from '../../models/project';
 
 const Projects = () => {
-  const { projects, addProject, updateProject, deleteProject, completeTask, updateTask } = useProjectContext();
+  const { projects, addProject, updateProject, deleteProject, archiveProject, unarchiveProject, completeTask, updateTask } = useProjectContext();
   const { updatePoints } = useUserContext();
   
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -30,6 +32,9 @@ const Projects = () => {
     minReward: 0,
     maxReward: 0
   });
+
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [projectToDelete, setProjectToDelete] = useState<string | null>(null);
 
   const handleCreateProject = (projectData: any) => {
     if (editingProject) {
@@ -89,9 +94,16 @@ const Projects = () => {
   };
 
   const handleDeleteClick = (id: string) => {
-      if (confirm('Are you sure you want to delete this project?')) {
-          deleteProject(id);
+      setProjectToDelete(id);
+      setDeleteConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+      if (projectToDelete) {
+          deleteProject(projectToDelete);
+          setProjectToDelete(null);
       }
+      setDeleteConfirmOpen(false);
   };
 
   const handleTaskCompleteClick = (projectId: string, taskId: string) => {
@@ -134,6 +146,18 @@ const Projects = () => {
     }
   };
 
+  const handleArchiveClick = (id: string) => {
+    archiveProject(id);
+  };
+
+  const handleUnarchiveClick = (id: string) => {
+    unarchiveProject(id);
+  };
+
+  // Filter projects into active and archived
+  const activeProjects = projects.filter(p => !p.isArchived);
+  const archivedProjects = projects.filter(p => p.isArchived);
+
   return (
     <Box sx={{ maxWidth: 800, mx: 'auto' }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
@@ -150,13 +174,16 @@ const Projects = () => {
         </Button>
       </Box>
       
-      {projects.length === 0 ? (
+      {activeProjects.length === 0 && archivedProjects.length === 0 ? (
         <Typography variant="body1" color="text.secondary" sx={{ textAlign: 'center', mt: 4 }}>
           No projects yet. Create one to get started!
         </Typography>
       ) : (
         <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-            {[...projects].sort((a, b) => {
+          {/* Active Projects */}
+          {activeProjects.length > 0 && (
+            <Box sx={{ display: 'flex', flexDirection: 'column', mb: archivedProjects.length > 0 ? 3 : 0 }}>
+              {[...activeProjects].sort((a, b) => {
                 // First, sort by important status: important projects go to the top
                 const isImportantA = a.isImportant || false;
                 const isImportantB = b.isImportant || false;
@@ -179,18 +206,59 @@ const Projects = () => {
                 const daysLeftA = Math.ceil((new Date(a.endDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
                 const daysLeftB = Math.ceil((new Date(b.endDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
                 return daysLeftA - daysLeftB;
-            }).map(project => (
+              }).map(project => (
                 <ProjectCard 
-                    key={project.id} 
-                    project={project}
-                    onEdit={handleEditClick}
-                    onProjectUpdate={updateProject}
-                    onDelete={handleDeleteClick}
-                    onTaskComplete={(taskId) => handleTaskCompleteClick(project.id, taskId)}
-                    onTaskReorder={handleTaskReorder}
-                    onTaskUpdate={updateTask}
+                  key={project.id} 
+                  project={project}
+                  onEdit={handleEditClick}
+                  onProjectUpdate={updateProject}
+                  onDelete={handleDeleteClick}
+                  onTaskComplete={(taskId) => handleTaskCompleteClick(project.id, taskId)}
+                  onTaskReorder={handleTaskReorder}
+                  onTaskUpdate={updateTask}
+                  onArchive={handleArchiveClick}
                 />
-            ))}
+              ))}
+            </Box>
+          )}
+
+          {/* Archived Projects - Collapsible Section */}
+          {archivedProjects.length > 0 && (
+            <Accordion defaultExpanded={false} sx={{ mt: 2 }}>
+              <AccordionSummary
+                expandIcon={<ExpandMoreIcon />}
+                sx={{
+                  '& .MuiAccordionSummary-content': {
+                    alignItems: 'center'
+                  }
+                }}
+              >
+                <Typography variant="h6" sx={{ mr: 2 }}>
+                  Archived Projects ({archivedProjects.length})
+                </Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                  {[...archivedProjects].sort((a, b) => {
+                    // Sort archived projects by creation date (newest first)
+                    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+                  }).map(project => (
+                    <ProjectCard 
+                      key={project.id} 
+                      project={project}
+                      onEdit={handleEditClick}
+                      onProjectUpdate={updateProject}
+                      onDelete={handleDeleteClick}
+                      onTaskComplete={(taskId) => handleTaskCompleteClick(project.id, taskId)}
+                      onTaskReorder={handleTaskReorder}
+                      onTaskUpdate={updateTask}
+                      onUnarchive={handleUnarchiveClick}
+                    />
+                  ))}
+                </Box>
+              </AccordionDetails>
+            </Accordion>
+          )}
         </Box>
       )}
 
@@ -211,6 +279,19 @@ const Projects = () => {
         maxReward={rewardDialogState.maxReward}
         onClose={() => setRewardDialogState(prev => ({ ...prev, open: false }))}
         onConfirm={handleRewardConfirm}
+      />
+
+      <ConfirmationDialog
+        open={deleteConfirmOpen}
+        title="Delete Project"
+        content="Are you sure you want to delete this project? This action cannot be undone."
+        onConfirm={handleConfirmDelete}
+        onClose={() => {
+          setDeleteConfirmOpen(false);
+          setProjectToDelete(null);
+        }}
+        confirmLabel="Delete"
+        confirmColor="error"
       />
     </Box>
   );

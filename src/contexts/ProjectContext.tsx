@@ -7,6 +7,8 @@ interface ProjectContextType {
   addProject: (project: Omit<Project, 'id' | 'createdAt' | 'tasks'> & { tasks: Omit<ProjectTask, 'id' | 'isCompleted'>[] }) => void;
   updateProject: (project: Project) => void;
   deleteProject: (projectId: string) => void;
+  archiveProject: (projectId: string) => void;
+  unarchiveProject: (projectId: string) => void;
   addTask: (projectId: string, task: Omit<ProjectTask, 'id' | 'isCompleted'>) => void;
   updateTask: (projectId: string, task: ProjectTask) => void;
   deleteTask: (projectId: string, taskId: string) => void;
@@ -61,6 +63,14 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
 
   const deleteProject = (projectId: string) => {
     saveProjects(projects.filter(p => p.id !== projectId));
+  };
+
+  const archiveProject = (projectId: string) => {
+    saveProjects(projects.map(p => p.id === projectId ? { ...p, isArchived: true } : p));
+  };
+
+  const unarchiveProject = (projectId: string) => {
+    saveProjects(projects.map(p => p.id === projectId ? { ...p, isArchived: false } : p));
   };
 
   const addTask = (projectId: string, taskData: Omit<ProjectTask, 'id' | 'isCompleted'>) => {
@@ -123,6 +133,8 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
     addProject,
     updateProject,
     deleteProject,
+    archiveProject,
+    unarchiveProject,
     addTask,
     updateTask,
     deleteTask,

@@ -23,10 +23,13 @@ import {
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import ArchiveIcon from '@mui/icons-material/Archive';
+import UnarchiveIcon from '@mui/icons-material/Unarchive';
 import { v4 as uuidv4 } from 'uuid';
 import type { ProjectStatus, Comment } from '../../models/project';
 import StatusIndicator from './StatusIndicator';
 import { useProjectContext } from '../../contexts/ProjectContext';
+import { ConfirmationDialog } from '../common/ConfirmationDialog';
 
 interface StatusModalProps {
   open: boolean;
@@ -35,11 +38,14 @@ interface StatusModalProps {
   currentStatus: ProjectStatus;
   comments: Comment[];
   isImportant?: boolean;
+  isArchived?: boolean;
   projectId?: string; // To exclude current project from limit check
   onSave: (status: ProjectStatus, comments: Comment[], isImportant?: boolean) => void;
+  onArchive?: (id: string) => void;
+  onUnarchive?: (id: string) => void;
 }
 
-const StatusModal = ({ open, onClose, title, currentStatus, comments, isImportant, projectId, onSave }: StatusModalProps) => {
+const StatusModal = ({ open, onClose, title, currentStatus, comments, isImportant, isArchived, projectId, onSave, onArchive, onUnarchive }: StatusModalProps) => {
   const [status, setStatus] = useState<ProjectStatus>(currentStatus);
   const [localComments, setLocalComments] = useState<Comment[]>(comments);
   const [localIsImportant, setLocalIsImportant] = useState<boolean>(isImportant ?? false);
@@ -48,6 +54,7 @@ const StatusModal = ({ open, onClose, title, currentStatus, comments, isImportan
   const [editingCommentText, setEditingCommentText] = useState('');
   const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
   const [activeCommentId, setActiveCommentId] = useState<string | null>(null);
+  const [archiveConfirmOpen, setArchiveConfirmOpen] = useState(false);
   const { projects } = useProjectContext();
   
   const showImportantOption = isImportant !== undefined;
@@ -285,11 +292,63 @@ const StatusModal = ({ open, onClose, title, currentStatus, comments, isImportan
                 </MenuItem>
             </Menu>
         </Box>
+
+        {/* Archive/Unarchive Section */}
+        {(onArchive || onUnarchive) && projectId && (
+          <Box sx={{ mt: 3, pt: 3, borderTop: '1px solid', borderColor: 'divider' }}>
+            <Typography variant="subtitle2" gutterBottom>
+              Archive Project
+            </Typography>
+            {isArchived ? (
+              <Button
+                startIcon={<UnarchiveIcon />}
+                onClick={() => {
+                  if (onUnarchive && projectId) {
+                    onUnarchive(projectId);
+                    onClose();
+                  }
+                }}
+                variant="outlined"
+                fullWidth
+              >
+                Unarchive Project
+              </Button>
+            ) : (
+              <Button
+                startIcon={<ArchiveIcon />}
+                onClick={() => {
+                  setArchiveConfirmOpen(true);
+                }}
+                variant="outlined"
+                color="secondary"
+                fullWidth
+              >
+                Archive Project
+              </Button>
+            )}
+          </Box>
+        )}
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
         <Button onClick={handleSave} variant="contained">Save</Button>
       </DialogActions>
+
+      <ConfirmationDialog
+        open={archiveConfirmOpen}
+        title="Archive Project"
+        content="Are you sure you want to archive this project? It will be moved to the archived projects section."
+        onConfirm={() => {
+          if (onArchive && projectId) {
+            onArchive(projectId);
+            setArchiveConfirmOpen(false);
+            onClose();
+          }
+        }}
+        onClose={() => setArchiveConfirmOpen(false)}
+        confirmLabel="Archive"
+        confirmColor="secondary"
+      />
     </Dialog>
   );
 };

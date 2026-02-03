@@ -27,4 +27,5 @@ export interface Project {
   status?: ProjectStatus;
   comments?: Comment[];
   isImportant?: boolean;
+  isArchived?: boolean;
 }
